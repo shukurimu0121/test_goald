@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    部屋
+{% endblock %}
+
+{% block main %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">参加者</h5>
+            {% for username in usernames %}
+                {{ username }}　
+            {% endfor %}
+
+        </div>
+    </div>
+    {% for goal in goals %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ goal.goal }}</h5>
+                {% if goal.user_id == user_id %}
+                    <form action="/update_progress_rate" method="POST">
+                        <label for="progress">達成率:{{ goal.progress_rate }}%</label><br>
+                        <input type="range" id="progress" name="progress" min="0" max="100" step="1" value="{{goal.progress_rate}}"><br>
+                        <output for="progress" id="progressValue">{{goal.progress_rate}}%</output><br>
+                        <input class="btn btn-primary" type="submit" value="更新">
+                    </form>
+                {% else %}
+                    <p>達成率:{{ goal.progress_rate }}%</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    <form action="/leave_room" method="post">
+        <button class="btn btn-danger" type="submit">退出</button>
+    </form>
+    <script>
+        const progressSlider = document.getElementById('progress');
+        const progressValue = document.getElementById('progressValue');
+
+        progressSlider.addEventListener('input', () => {
+            progressValue.textContent = progressSlider.value + '%';
+        });
+    </script>
+{% endblock %}

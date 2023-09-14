@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    ホーム
+{% endblock %}
+
+{% block main %}
+    {% if goal %}
+        <div class="goal">
+            {{ goal }}
+        </div>
+    {% else %}
+        <div>
+            目標を宣言しよう！
+        </div>
+    {% endif %}
+{% endblock %}

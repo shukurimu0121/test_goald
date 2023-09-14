@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    作成
+{% endblock %}
+
+{% block main %}
+{% if msg %}
+    <div class="alert alert-danger" role="alert">
+        {{ msg }}
+    </div>
+{% else %}
+
+    <form action="/make_room" method="post">
+        <div class="mb-3">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="room_id" name="room_id" placeholder="ルームID" type="number">
+        </div>
+        <div class="mb-3">
+            <input class="form-control mx-auto w-auto" id="room_password" name="room_password" placeholder="ルームパスワード" type="password">
+        </div>
+        <button class="btn btn-primary" type="submit">作成</button>
+    </form>
+{% endif %}
+{% endblock %}
