@@ -25,12 +25,16 @@
                             {% if goal.user_id == user_id %}
                                 <form action="/update_progress_rate" method="POST">
                                     <label for="progress">達成率:{{ goal.progress_rate }}%</label><br>
+                                    <p id="deadline-{{ goal.user_id }}" class="hidden">{{ goal.deadline }}</p><br>
+                                    <p>残り時間：<span id="remaining-time-{{ goal.user_id }}"></span></p><br>
                                     <input type="range" id="progress" name="progress" min="0" max="100" step="1" value="{{goal.progress_rate}}"><br>
                                     <output for="progress" id="progressValue">{{goal.progress_rate}}%</output><br>
                                     <input class="btn btn-primary" type="submit" value="更新">
                                 </form>
                             {% else %}
                                 <p>達成率:{{ goal.progress_rate }}%</p>
+                                <p id="deadline-{{ goal.user_id }}" class="hidden">{{ goal.deadline }}</p>
+                                <p>残り時間：<span id="remaining-time-{{ goal.user_id }}"></span></p>
                             {% endif %}
                         </div>
                     </div>
@@ -42,11 +46,38 @@
         </div>
     </div>
     <script>
+        // 達成率のスライダー
         const progressSlider = document.getElementById('progress');
         const progressValue = document.getElementById('progressValue');
 
         progressSlider.addEventListener('input', () => {
             progressValue.textContent = progressSlider.value + '%';
         });
+
+        function updateRemainingTime() {
+            const elements = document.querySelectorAll('[id^="remaining-time-"]');
+            elements.forEach(function(element) {
+                const userId = element.id.replace('remaining-time-', '');
+                const user_deadline = document.getElementById('deadline-' + userId).textContent;
+                const deadline = new Date(user_deadline);
+                // ユーザーごとに適切な方法でdeadlineを設定してください
+                const now = new Date();
+                const remainingTime = deadline - now;
+
+                if (remainingTime <= 0) {
+                    element.textContent = '終了です';
+                } else {
+                    var days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+                    element.textContent = days + "日 " + hours + "時間 " + minutes + "分 " + seconds + "秒";
+                }
+            });
+        }
+
+        // 1秒ごとに更新
+        setInterval(updateRemainingTime, 1000);
+        updateRemainingTime();  // ページ読み込み時にも更新
     </script>
 {% endblock %}

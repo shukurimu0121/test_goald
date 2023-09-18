@@ -20,6 +20,7 @@ class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     goal = db.Column(db.String(200), nullable=False)
     date_created = db.Column(db.DateTime, nullable=False)
+    deadline = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
     progress_rate = db.Column(db.Integer, nullable=False, default=0)
     
@@ -284,7 +285,7 @@ def room():
     for room_user_id in room_users_ids:
         # 各user_idごとの目標と進捗率を取得し、辞書に追加
         user_goals = Goal.query.filter(Goal.user_id == room_user_id).all()
-        user_goal_dicts = [{"goal": goal.goal, "progress_rate": goal.progress_rate, "user_id": goal.user_id} for goal in user_goals]
+        user_goal_dicts = [{"goal": goal.goal, "progress_rate": goal.progress_rate, "user_id": goal.user_id, "deadline": goal.deadline} for goal in user_goals]
         goals.extend(user_goal_dicts)
     
     # get all members' username
@@ -324,6 +325,13 @@ def goal():
     if request.method == "POST":
         # get the user's goal input
         goal = request.form.get("goal")
+        date = request.form.get("date")
+        time = request.form.get("time")
+
+        datetime_data = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M')
+
+        # deadline to datetime
+        deadline = datetime_data
 
         # When invalid input
         if not goal:
@@ -332,8 +340,7 @@ def goal():
         # Put goal info to database
         try:
             date_created = datetime.now()
-            new_goal = Goal(goal=goal, date_created=date_created, user_id=user_id)
-
+            new_goal = Goal(goal=goal, date_created=date_created, deadline=deadline, user_id=user_id)
             db.session.add(new_goal)
             db.session.commit()
             return redirect("/goal")
@@ -345,10 +352,11 @@ def goal():
     else:
         # if user already has a goal, display it
         goal = Goal.query.filter(Goal.user_id == user_id).all()
+        today = datetime.now().strftime('%Y-%m-%d')
         if len(goal) == 1:
-            return render_template("goal.html", goal=goal[0].goal, id=goal[0].id, progress_rate=goal[0].progress_rate)
+            return render_template("goal.html", goal=goal[0].goal, id=goal[0].id, progress_rate=goal[0].progress_rate, deadline=goal[0].deadline, today=today)
         else:
-            return render_template("goal.html")
+            return render_template("goal.html", today=today)
         
 # delete goal route
 @app.route("/delete_goal", methods=["POST"])

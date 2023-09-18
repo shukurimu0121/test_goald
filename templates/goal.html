@@ -6,11 +6,14 @@
 
 {% block main %}
     {% if goal %}
-        <div class="goal">
+        <div class="goal mb-3">
             {{ goal }}
         </div>
-        <div class="progress_rate">
+        <div class="progress_rate mb-3">
             <p>達成率：{{ progress_rate }}%</p>
+        </div>
+        <div class="progress_rate mb-3">
+            <p>残り時間：<span id="remaining-time"></span></p>
         </div>
         <form action="/delete_goal" method="post">
             <input name="goal_id" type="hidden" value="{{ id }}">
@@ -21,7 +24,36 @@
         <div class="mb-3">
             <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="goal" name="goal" placeholder="目標を入力してください" type="text">
         </div>
+        <div class="mb-3">
+            <label for="deadline" class="form-label">期限</label>
+            <input type="date" name="date" value="{{ today }}" min="{{ today }}">
+            <input type="time" name="time">
+        </div>
         <button class="btn btn-primary" type="submit">宣言</button>
     </form>
     {% endif %}
+    <script>
+        // Flaskから渡されたdeadline変数を取得
+        var deadline = new Date("{{ deadline }}");
+
+        function updateRemainingTime() {
+            var now = new Date();
+            var remainingTime = deadline - now;
+
+            if (remainingTime <= 0) {
+                document.getElementById("remaining-time").textContent = "終了しました";
+            } else {
+                var days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+                document.getElementById("remaining-time").textContent = days + "日 " + hours + "時間 " + minutes + "分 " + seconds + "秒";
+            }
+        }
+
+        // 1秒ごとに更新
+        setInterval(updateRemainingTime, 1000);
+        updateRemainingTime();  // ページ読み込み時にも更新
+    </script>
 {% endblock %}
