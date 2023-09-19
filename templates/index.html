@@ -6,12 +6,13 @@
 
 {% block main %}
     {% if goal %}
-        <div class="goal">
-            {{ goal }}
+        <div class="mb-3">
+            <h1 class="goal">{{ goal }}</h1>
         </div>
     {% else %}
-        <div>
-            目標を宣言しよう！
+        <div class="mb-3">
+            <h1 class="goal">目標を宣言しよう！</h1>
         </div>
     {% endif %}
+
 {% endblock %}

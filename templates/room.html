@@ -33,6 +33,7 @@
                                 </form>
                             {% else %}
                                 <p>達成率:{{ goal.progress_rate }}%</p>
+                                <input type="range" id="progress" name="progress" min="0" max="100" step="1" value="{{goal.progress_rate}}" disabled><br>
                                 <p id="deadline-{{ goal.user_id }}" class="hidden">{{ goal.deadline }}</p>
                                 <p>残り時間：<span id="remaining-time-{{ goal.user_id }}"></span></p>
                             {% endif %}
@@ -54,6 +55,7 @@
             progressValue.textContent = progressSlider.value + '%';
         });
 
+        // 残り時間の表示
         function updateRemainingTime() {
             const elements = document.querySelectorAll('[id^="remaining-time-"]');
             elements.forEach(function(element) {
@@ -79,5 +81,6 @@
         // 1秒ごとに更新
         setInterval(updateRemainingTime, 1000);
         updateRemainingTime();  // ページ読み込み時にも更新
+
     </script>
 {% endblock %}

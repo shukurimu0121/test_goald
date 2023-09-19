@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
+import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///goald.db'
@@ -293,6 +294,11 @@ def room():
     for room_user_id in room_users_ids:
         username = User.query.filter(User.id == room_user_id).first().name
         usernames.append(username)
+    
+    #shuffle usernames and goals
+    random.shuffle(usernames)
+    random.shuffle(goals)
+    
     return render_template("room.html", goals=goals, usernames=usernames, user_id=user_id)
 
 # leave room route
