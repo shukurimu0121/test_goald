@@ -83,7 +83,7 @@
                 const remainingTime = deadline - now;
 
                 if (remainingTime <= 0) {
-                    element.textContent = '終了です';
+                    element.textContent = 'お疲れ様でした！';
                 } else {
                     var days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
                     var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
