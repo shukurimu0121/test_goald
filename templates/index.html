@@ -7,12 +7,17 @@
 {% block main %}
     {% if goal %}
         <div class="mb-3">
-            <h1 class="goal">{{ goal }}</h1>
+            <div class="username mb-5">
+                <h3>{{ username }}さんの目標</h3>
+            </div>
+            <h1 class="goal mx-auto">{{ goal }}</h1>
         </div>
     {% else %}
         <div class="mb-3">
-            <h1 class="goal">目標を宣言しよう！</h1>
+            <h1 class="goal mx-auto">{{ username }}さん、目標を宣言しましょう！</h1>
         </div>
     {% endif %}
+
+    <img src="/static/pan_767266.png" alt="pot" class="pot-img mx-auto my-5">
 
 {% endblock %}

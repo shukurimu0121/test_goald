@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
 import random
+import math
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///goald.db'
@@ -60,12 +61,16 @@ def index():
 
     # get the user's goal
     goal = Goal.query.filter(Goal.user_id == user_id).all()
+
+    # get username
+    username = User.query.filter(User.id == user_id).first().name
+
     if len(goal) != 0:
         user_goal = goal[0].goal
-        return render_template("index.html", goal=user_goal)
+        return render_template("index.html", goal=user_goal, username=username)
     
     else:
-        return render_template("index.html")
+        return render_template("index.html", username=username)
 
 # login route
 @app.route("/login", methods=["GET", "POST"])
@@ -299,7 +304,17 @@ def room():
     random.shuffle(usernames)
     random.shuffle(goals)
     
-    return render_template("room.html", goals=goals, usernames=usernames, user_id=user_id)
+    # get the number of members
+    number_of_members = len(usernames)
+
+    # get progress rate average
+    progress_rate_sum = 0
+    for goal in goals:
+        progress_rate_sum += goal["progress_rate"]
+    progress_rate_average = progress_rate_sum / number_of_members  
+    average = math.floor(progress_rate_average) 
+
+    return render_template("room.html", goals=goals, usernames=usernames, user_id=user_id, number_of_members=number_of_members, average=average)
 
 # leave room route
 @app.route("/leave_room", methods=["POST"])

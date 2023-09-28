@@ -7,13 +7,13 @@
 {% block main %}
     {% if goal %}
         <div class="goal mb-3">
-            {{ goal }}
+            <h1>{{ goal }}</h1>
         </div>
         <div class="progress_rate mb-3">
-            <p>達成率：{{ progress_rate }}%</p>
+            <h3>達成率：{{ progress_rate }}%</h3>
         </div>
         <div class="progress_rate mb-3">
-            <p>残り時間：<span id="remaining-time"></span></p>
+            <h3>あと<span id="remaining-time"></span></h3>
         </div>
         <form action="/delete_goal" method="post">
             <input name="goal_id" type="hidden" value="{{ id }}">
@@ -32,6 +32,7 @@
         <button class="btn btn-primary" type="submit">宣言</button>
     </form>
     {% endif %}
+    <img src="/static/pan_767266.png" alt="pot" class="pot-img mx-auto my-5">
     <script>
         // Flaskから渡されたdeadline変数を取得
         var deadline = new Date("{{ deadline }}");
