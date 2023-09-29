@@ -420,5 +420,5 @@ def update_progress_rate():
         return render_template("apology.html", msg="失敗しました")  
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
 
