@@ -355,8 +355,8 @@ def goal():
         deadline = datetime_data
 
         # When invalid input
-        if not goal:
-            return render_template("apology.html", msg="目標を入力してください")
+        if not goal or not date or not time:
+            return render_template("apology.html", msg="正しく入力してください")
         
         # Put goal info to database
         try:
