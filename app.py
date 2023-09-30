@@ -13,11 +13,29 @@ import psycopg2
 app = Flask(__name__)
 
 # connect to database
-DATABASE_URL = os.environ['DATABASE_URL']
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+def connect_to_database():
+    DATABASE_URL = os.environ['DATABASE_URL']
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    return conn
 
-# make cursor
-cur = conn.cursor()
+# get cursor
+def get_cursor():
+    conn = connect_to_database()
+    cur = conn.cursor()
+    return cur
+
+def close_cursor():
+    cur = get_cursor()
+    cur.close()
+
+def close_connection():
+    conn = connect_to_database()
+    conn.close()
+
+def commit():
+    conn = connect_to_database()
+    conn.commit()
+
 
 #configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
@@ -47,10 +65,19 @@ def index():
     user_id = session["user_id"]
 
     # get the user's goal from database
-    goal = cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
+
+    cur = get_cursor()
+    cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
+    goal = cur.fetchall()
+    close_cursor()
+    close_connection()
 
     # get username
-    username = cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))[0]["name"]
+    cur = get_cursor()
+    cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))[0]["name"]
+    username = cur.fetchall()
+    close_cursor()
+    close_connection()
 
     if len(goal) != 0:
         user_goal = goal[0].goal
@@ -81,8 +108,13 @@ def login():
             return render_template("apology.html", msg="パスワードを入力してください")
 
         # Get imput username from database
-        user = cur.execute("SELECT * FROM users WHERE name = %s", (username,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM users WHERE name = %s", (username,))
+        user = cur.fetchall()
+        close_cursor()
+        close_connection()
 
+        print(user)
         # Check the username and password are correct
         if len(user) != 1 or not check_password_hash(user[0].password_hash, password):
             return render_template("apology.html", msg="不当なユーザーネームまたはパスワードです")
@@ -135,14 +167,23 @@ def register():
 
         # Check the username already exists
         # Query database for username
-        user = cur.execute("SELECT * FROM users WHERE name = %s", (username,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM users WHERE name = %s", (username,))
+        user = cur.fetchall()
+        close_cursor()
+        close_connection()
+
         if  len(user) != 0:
             return render_template("apology.html", msg="そのユーザーネームはすでに使われています")
 
         else:
             # Insert username and password hash to table
             password_hash = generate_password_hash(password)
+            cur = get_cursor()
             cur.execute("INSERT INTO users (name, password_hash) VALUES (%s, %s)", (username, password_hash))
+            commit()
+            close_cursor()
+            close_connection()
 
             # redirect log in page
             return redirect("/login")
@@ -170,7 +211,12 @@ def make_room():
             return render_template("apology.html", msg="ルームIDとパスワードを入力してください")
         
         # if the room id already exists, return apology
-        room = cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+        room = cur.fetchall()
+        close_cursor()
+        close_connection()
+
         if len(room) != 0:
             return render_template("apology.html", msg="そのルームIDはすでに使われています")
 
@@ -179,7 +225,11 @@ def make_room():
 
         # Put room info to database
         try:
+            cur = get_cursor()
             cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
+            commit()
+            close_cursor()
+            close_connection()
             return redirect(url_for("room", room_id=room_id))
         
         except:
@@ -188,7 +238,12 @@ def make_room():
     # When GET
     else:
         # if user already join a room, tell it
-        room = cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+        room = cur.fetchall()
+        close_cursor()
+        close_connection()
+
         if len(room) != 0:
             return render_template("make_room.html", msg="すでにルームに参加しています")
         
@@ -214,12 +269,20 @@ def enter_room():
             return render_template("apology.html", msg="ルームIDとパスワードを入力してください")
         
         # check user submit goal
-        goal = cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+        goal = cur.fetchall()
+        close_cursor()
+        close_connection()
         if len(goal) == 0:
             return render_template("apology.html", msg="目標を設定してください")
         
         # Get room info from database
-        room = cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+        room = cur.fetchall()
+        close_cursor()
+        close_connection()
 
         # Check the room id and password are correct
         if len(room) == 0 or not check_password_hash(room[0].room_password_hash, room_password):
@@ -229,7 +292,11 @@ def enter_room():
             #パスワードをハッシュ化
             room_password_hash = generate_password_hash(room_password)
             # ユーザーを部屋に追加
+            cur = get_cursor()
             cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
+            commit()
+            close_cursor()
+            close_connection()
             return redirect(url_for("room", room_id=room_id))
     # When GET
     else:
@@ -238,7 +305,12 @@ def enter_room():
         user_id = session["user_id"]
 
         # get the user's room info from database
-        room = cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+        room = cur.fetchall()
+        close_cursor()
+        close_connection()
+
         # if user already join a room, redirect to room page
         if len(room) != 0:
             return redirect(url_for("room", room_id=room[0].room_id))
@@ -254,7 +326,12 @@ def room():
     room_id = request.args.get("room_id")
 
     #if the room does not exist, return apology
-    room = cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+    cur = get_cursor()
+    cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+    room = cur.fetchall()
+    close_cursor()
+    close_connection()
+
     if len(room) == 0:
         return render_template("apology.html", msg="そのルームは存在しません")
 
@@ -269,14 +346,18 @@ def room():
     # get all menbers' goal info
     for room_user_id in room_users_ids:
         # 各user_idごとの目標と進捗率を取得し、辞書に追加
-        user_goals = cur.execute("SELECT * FROM goals WHERE user_id = %s", (room_user_id,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM goals WHERE user_id = %s", (room_user_id,))
+        user_goals = cur.fetchall()
         user_goal_dicts = [{"goal": goal.goal, "progress_rate": goal.progress_rate, "user_id": goal.user_id, "deadline": goal.deadline} for goal in user_goals]
         goals.extend(user_goal_dicts)
     
     # get all members' username
     usernames = []
     for room_user_id in room_users_ids:
-        username = cur.execute("SELECT name FROM users WHERE id = %s", (room_user_id,))[0]["name"]
+        cur = get_cursor()
+        cur.execute("SELECT name FROM users WHERE id = %s", (room_user_id,))[0]["name"]
+        username = cur.fetchall()
         usernames.append(username)
     
     #shuffle usernames and goals
@@ -305,7 +386,11 @@ def leave_room():
 
     # delete user from room
     try:
+        cur = get_cursor()
         cur.execute("DELETE FROM rooms WHERE user_id = %s", (user_id,))
+        commit()
+        close_cursor()
+        close_connection()
         return redirect("/")
 
     except:
@@ -338,7 +423,11 @@ def goal():
         # Put goal info to database
         try:
             date_created = datetime.now()
+            cur = get_cursor()
             cur.execute("INSERT INTO goals (goal, date_created, deadline, user_id) VALUES (%s, %s, %s, %s)", (goal, date_created, deadline, user_id))
+            commit()
+            close_cursor()
+            close_connection()
             return redirect("/goal")
 
         except:
@@ -347,7 +436,12 @@ def goal():
     # When GET
     else:
         # if user already has a goal, display it
-        goal = cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+        cur = get_cursor()
+        cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+        goal = cur.fetchall()
+        close_cursor()
+        close_connection()
+
         today = datetime.now().strftime('%Y-%m-%d')
         if len(goal) == 1:
             return render_template("goal.html", goal=goal[0].goal, id=goal[0].id, progress_rate=goal[0].progress_rate, deadline=goal[0].deadline, today=today)
@@ -365,7 +459,11 @@ def delete_goal():
 
     # delete goal from database
     try:
+        cur = get_cursor()
         cur.execute("DELETE FROM goals WHERE user_id = %s", (user_id,))
+        commit()
+        close_cursor()
+        close_connection()
         return redirect("/goal")
     
     except:
@@ -384,7 +482,11 @@ def update_progress_rate():
 
     # update progress rate
     try:
+        cur = get_cursor()
         cur.execute("UPDATE goals SET progress_rate = %s WHERE user_id = %s", (progress_rate, user_id))
+        commit()
+        close_cursor()
+        close_connection()
         return redirect("/")
     
     except:
