@@ -17,38 +17,8 @@ import psycopg2
 app = Flask(__name__)
 
 # connect to database
-database_url = os.environ['DATABASE_URL']
-if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
-Base = declarative_base()
-
-# define database
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50), nullable=False)
-    password_hash = Column(String(200), nullable=False)
-
-
-class Goal(Base):
-    __tablename__ = 'goals'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    goal = Column(String(200), nullable=False)
-    date_created = Column(DateTime, nullable=False)
-    deadline = Column(DateTime, nullable=False)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False, unique=True)
-    progress_rate = Column(Integer, nullable=False, default=0)
-    
-class Room(Base):
-    __tablename__ = 'rooms'
-    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
-    room_id = Column(Integer, nullable=False)
-    room_password_hash = Column(String(200), nullable=False)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False, unique=True)
-
-# create database
-engine = create_engine(database_url, echo=True)
-session = sessionmaker(bind=engine)()
+DATABASE_URL = os.environ['DATABASE_URL']
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 #configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
