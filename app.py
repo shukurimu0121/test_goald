@@ -18,25 +18,6 @@ def connect_to_database():
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     return conn
 
-# get cursor
-def get_cursor():
-    conn = connect_to_database()
-    cur = conn.cursor()
-    return cur
-
-def close_cursor():
-    cur = get_cursor()
-    cur.close()
-
-def close_connection():
-    conn = connect_to_database()
-    conn.close()
-
-def commit():
-    conn = connect_to_database()
-    conn.commit()
-
-
 #configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
@@ -65,19 +46,16 @@ def index():
     user_id = session["user_id"]
 
     # get the user's goal from database
-
-    cur = get_cursor()
-    cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
-    goal = cur.fetchall()
-    close_cursor()
-    close_connection()
+    with connect_to_database() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
+            goal = cur.fetchall()
 
     # get username
-    cur = get_cursor()
-    cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))[0]["name"]
-    username = cur.fetchall()
-    close_cursor()
-    close_connection()
+    with connect_to_database() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))[0]["name"]
+            username = cur.fetchall()
 
     if len(goal) != 0:
         user_goal = goal[0].goal
@@ -108,13 +86,11 @@ def login():
             return render_template("apology.html", msg="パスワードを入力してください")
 
         # Get imput username from database
-        cur = get_cursor()
-        cur.execute("SELECT * FROM users WHERE name = %s", (username,))
-        user = cur.fetchall()
-        close_cursor()
-        close_connection()
-
-        print(user)
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE name = %s", (username,))
+                user = cur.fetchall()
+        
         # Check the username and password are correct
         if len(user) != 1 or not check_password_hash(user[0].password_hash, password):
             return render_template("apology.html", msg="不当なユーザーネームまたはパスワードです")
@@ -167,11 +143,12 @@ def register():
 
         # Check the username already exists
         # Query database for username
-        cur = get_cursor()
-        cur.execute("SELECT * FROM users WHERE name = %s", (username,))
-        user = cur.fetchall()
-        close_cursor()
-        close_connection()
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE name = %s", (username,))
+                user = cur.fetchall()
+        
+
 
         if  len(user) != 0:
             return render_template("apology.html", msg="そのユーザーネームはすでに使われています")
