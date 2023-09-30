@@ -1,10 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, PrimaryKeyConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
@@ -395,5 +391,5 @@ def update_progress_rate():
         return render_template("apology.html", msg="失敗しました")  
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
