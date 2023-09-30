@@ -13,6 +13,7 @@ DATABASE_URL = os.environ['DATABASE_URL']
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 db = SQLAlchemy(app)
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 # create database
 class User(db.Model):
