@@ -6,9 +6,12 @@ from functools import wraps
 from datetime import datetime
 import random
 import math
+import os
+import psycopg2
 
+DATABASE_URL = os.environ['DATABASE_URL']
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///goald.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 db = SQLAlchemy(app)
 
 # create database
