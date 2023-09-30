@@ -1,6 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, PrimaryKeyConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
@@ -9,32 +13,37 @@ import math
 import os
 import psycopg2
 
-DATABASE_URL = os.environ['DATABASE_URL']
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-db = SQLAlchemy(app)
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+
+# connect to database
+DATABASE_URL = os.environ['DATABASE_URL']
+Base = declarative_base()
+
+# define database
+class User(Base):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(50), nullable=False)
+    password_hash = Column(String(200), nullable=False)
+
+
+class Goal(Base):
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    goal = Column(String(200), nullable=False)
+    date_created = Column(DateTime, nullable=False)
+    deadline = Column(DateTime, nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False, unique=True)
+    progress_rate = Column(Integer, nullable=False, default=0)
+    
+class Room(Base):
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
+    room_id = Column(Integer, nullable=False)
+    room_password_hash = Column(String(200), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False, unique=True)
 
 # create database
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(50), nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-
-
-class Goal(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    goal = db.Column(db.String(200), nullable=False)
-    date_created = db.Column(db.DateTime, nullable=False)
-    deadline = db.Column(db.DateTime, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
-    progress_rate = db.Column(db.Integer, nullable=False, default=0)
-    
-class Room(db.Model):
-    id = db.Column(db.Integer, nullable=False, primary_key=True, autoincrement=True)
-    room_id = db.Column(db.Integer, nullable=False)
-    room_password_hash = db.Column(db.String(200), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+engine = create_engine(DATABASE_URL)
+session = sessionmaker(bind=engine)()
 
 #configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
