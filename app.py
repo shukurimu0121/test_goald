@@ -22,12 +22,14 @@ Base = declarative_base()
 
 # define database
 class User(Base):
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
     password_hash = Column(String(200), nullable=False)
 
 
 class Goal(Base):
+    __tablename__ = 'goals'
     id = Column(Integer, primary_key=True, autoincrement=True)
     goal = Column(String(200), nullable=False)
     date_created = Column(DateTime, nullable=False)
@@ -36,6 +38,7 @@ class Goal(Base):
     progress_rate = Column(Integer, nullable=False, default=0)
     
 class Room(Base):
+    __tablename__ = 'rooms'
     id = Column(Integer, nullable=False, primary_key=True, autoincrement=True)
     room_id = Column(Integer, nullable=False)
     room_password_hash = Column(String(200), nullable=False)
