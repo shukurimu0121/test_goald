@@ -46,16 +46,22 @@ def index():
     user_id = session["user_id"]
 
     # get the user's goal from database
-    with connect_to_database() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
-                goal = cur.fetchall()
+    try:
+        with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
+                    goal = cur.fetchall()
+    except:
+        return render_template("apology.html", msg="失敗しました")
 
     # get username
-    with connect_to_database() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))[0]["name"]
-            username = cur.fetchall()
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))[0]["name"]
+                username = cur.fetchall()
+    except:
+        return render_template("apology.html", msg="失敗しました")
 
     if len(goal) != 0:
         user_goal = goal[0].goal
@@ -86,10 +92,13 @@ def login():
             return render_template("apology.html", msg="パスワードを入力してください")
 
         # Get imput username from database
-        with connect_to_database() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM users WHERE name = %s", (username,))
-                user = cur.fetchall()
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM users WHERE name = %s", (username,))
+                    user = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
         
         # Check the username and password are correct
         if len(user) != 1 or not check_password_hash(user[0].password_hash, password):
@@ -191,11 +200,13 @@ def make_room():
             return render_template("apology.html", msg="ルームIDとパスワードを入力してください")
         
         # if the room id already exists, return apology
-        cur = get_cursor()
-        cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
-        room = cur.fetchall()
-        close_cursor()
-        close_connection()
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+                    room = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
 
         if len(room) != 0:
             return render_template("apology.html", msg="そのルームIDはすでに使われています")
@@ -203,27 +214,29 @@ def make_room():
         # password to hash
         room_password_hash = generate_password_hash(room_password)
 
-        # Put room info to database
+        # Put room info to database        
         try:
-            cur = get_cursor()
-            cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
-            commit()
-            close_cursor()
-            close_connection()
-            return redirect(url_for("room", room_id=room_id))
-        
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
+                conn.commit()
         except:
-            return render_template("apology.html", msg="すでにルームに参加しています")
+            return render_template("apology.html", msg="失敗しました")
+        
+        return redirect(url_for("room", room_id=room_id))
+    
 
     # When GET
     else:
         # if user already join a room, tell it
-        cur = get_cursor()
-        cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
-        room = cur.fetchall()
-        close_cursor()
-        close_connection()
-
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+                    room = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
+        
         if len(room) != 0:
             return render_template("make_room.html", msg="すでにルームに参加しています")
         
@@ -249,20 +262,25 @@ def enter_room():
             return render_template("apology.html", msg="ルームIDとパスワードを入力してください")
         
         # check user submit goal
-        cur = get_cursor()
-        cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
-        goal = cur.fetchall()
-        close_cursor()
-        close_connection()
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+                    goal = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
+
         if len(goal) == 0:
             return render_template("apology.html", msg="目標を設定してください")
         
-        # Get room info from database
-        cur = get_cursor()
-        cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
-        room = cur.fetchall()
-        close_cursor()
-        close_connection()
+        # Get room info from database)
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+                    room = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
 
         # Check the room id and password are correct
         if len(room) == 0 or not check_password_hash(room[0].room_password_hash, room_password):
@@ -272,11 +290,14 @@ def enter_room():
             #パスワードをハッシュ化
             room_password_hash = generate_password_hash(room_password)
             # ユーザーを部屋に追加
-            cur = get_cursor()
-            cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
-            commit()
-            close_cursor()
-            close_connection()
+            try:
+                with connect_to_database() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
+                    conn.commit()
+            except:
+                return render_template("apology.html", msg="失敗しました")
+            
             return redirect(url_for("room", room_id=room_id))
     # When GET
     else:
@@ -285,11 +306,13 @@ def enter_room():
         user_id = session["user_id"]
 
         # get the user's room info from database
-        cur = get_cursor()
-        cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
-        room = cur.fetchall()
-        close_cursor()
-        close_connection()
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+                    room = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
 
         # if user already join a room, redirect to room page
         if len(room) != 0:
@@ -306,11 +329,13 @@ def room():
     room_id = request.args.get("room_id")
 
     #if the room does not exist, return apology
-    cur = get_cursor()
-    cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
-    room = cur.fetchall()
-    close_cursor()
-    close_connection()
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+                room = cur.fetchall()
+    except:
+        return render_template("apology.html", msg="失敗しました")
 
     if len(room) == 0:
         return render_template("apology.html", msg="そのルームは存在しません")
@@ -326,18 +351,27 @@ def room():
     # get all menbers' goal info
     for room_user_id in room_users_ids:
         # 各user_idごとの目標と進捗率を取得し、辞書に追加
-        cur = get_cursor()
-        cur.execute("SELECT * FROM goals WHERE user_id = %s", (room_user_id,))
-        user_goals = cur.fetchall()
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM goals WHERE user_id = %s", (room_user_id,))
+                    user_goals = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
         user_goal_dicts = [{"goal": goal.goal, "progress_rate": goal.progress_rate, "user_id": goal.user_id, "deadline": goal.deadline} for goal in user_goals]
         goals.extend(user_goal_dicts)
     
     # get all members' username
     usernames = []
     for room_user_id in room_users_ids:
-        cur = get_cursor()
-        cur.execute("SELECT name FROM users WHERE id = %s", (room_user_id,))[0]["name"]
-        username = cur.fetchall()
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT name FROM users WHERE id = %s", (room_user_id,))[0]["name"]
+                    username = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
+        
         usernames.append(username)
     
     #shuffle usernames and goals
@@ -366,15 +400,14 @@ def leave_room():
 
     # delete user from room
     try:
-        cur = get_cursor()
-        cur.execute("DELETE FROM rooms WHERE user_id = %s", (user_id,))
-        commit()
-        close_cursor()
-        close_connection()
-        return redirect("/")
-
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM rooms WHERE user_id = %s", (user_id,))
+            conn.commit()
     except:
-        return render_template("apology.html", msg="このルームに参加していません")
+        return render_template("apology.html", msg="失敗しました")
+    
+    return redirect("/enter_room")
     
 # goal route
 @app.route("/goal", methods=["GET", "POST"])
@@ -396,31 +429,34 @@ def goal():
         # deadline to datetime
         deadline = datetime_data
 
+        # date created
+        date_created = datetime.now()
+
         # When invalid input
         if not goal or not date or not time:
             return render_template("apology.html", msg="正しく入力してください")
         
         # Put goal info to database
         try:
-            date_created = datetime.now()
-            cur = get_cursor()
-            cur.execute("INSERT INTO goals (goal, date_created, deadline, user_id) VALUES (%s, %s, %s, %s)", (goal, date_created, deadline, user_id))
-            commit()
-            close_cursor()
-            close_connection()
-            return redirect("/goal")
-
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("INSERT INTO goals (goal, date_created, deadline, user_id) VALUES (%s, %s, %s, %s)", (goal, date_created, deadline, user_id))
+                conn.commit()
         except:
             return render_template("apology.html", msg="失敗しました")
-    
+        
+        return redirect("/goal")
+
     # When GET
     else:
         # if user already has a goal, display it
-        cur = get_cursor()
-        cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
-        goal = cur.fetchall()
-        close_cursor()
-        close_connection()
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+                    goal = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
 
         today = datetime.now().strftime('%Y-%m-%d')
         if len(goal) == 1:
@@ -437,17 +473,16 @@ def delete_goal():
     # get user id
     user_id = session["user_id"]
 
-    # delete goal from database
+    # delete goal from database    
     try:
-        cur = get_cursor()
-        cur.execute("DELETE FROM goals WHERE user_id = %s", (user_id,))
-        commit()
-        close_cursor()
-        close_connection()
-        return redirect("/goal")
-    
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM goals WHERE user_id = %s", (user_id,))
+            conn.commit()
     except:
         return render_template("apology.html", msg="失敗しました")
+    
+    return redirect("/goal")
 
 # update progress rate route
 @app.route("/update_progress_rate", methods=["POST"])
@@ -462,16 +497,15 @@ def update_progress_rate():
 
     # update progress rate
     try:
-        cur = get_cursor()
-        cur.execute("UPDATE goals SET progress_rate = %s WHERE user_id = %s", (progress_rate, user_id))
-        commit()
-        close_cursor()
-        close_connection()
-        return redirect("/")
-    
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE goals SET progress_rate = %s WHERE user_id = %s", (progress_rate, user_id))
+            conn.commit()
     except:
-        return render_template("apology.html", msg="失敗しました")  
+        return render_template("apology.html", msg="失敗しました")
+    
+    return redirect("/")
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
 
