@@ -17,7 +17,9 @@ import psycopg2
 app = Flask(__name__)
 
 # connect to database
-DATABASE_URL = os.environ['DATABASE_URL']
+database_url = os.environ['DATABASE_URL']
+if database_url.startswith("postgres://"):
+    uri = database_url.replace("postgres://", "postgresql://", 1)
 Base = declarative_base()
 
 # define database
@@ -45,7 +47,7 @@ class Room(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False, unique=True)
 
 # create database
-engine = create_engine(DATABASE_URL)
+engine = create_engine(database_url, echo=True)
 session = sessionmaker(bind=engine)()
 
 #configure session to use filesystem
