@@ -19,7 +19,7 @@ app = Flask(__name__)
 # connect to database
 database_url = os.environ['DATABASE_URL']
 if database_url.startswith("postgres://"):
-    uri = database_url.replace("postgres://", "postgresql://", 1)
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
 Base = declarative_base()
 
 # define database
