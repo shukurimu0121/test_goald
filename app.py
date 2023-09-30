@@ -9,12 +9,12 @@ import math
 import os
 import psycopg2
 
+DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__)
 
 # connect to database
 def connect_to_database():
-    DATABASE_URL = os.environ['DATABASE_URL']
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     return conn
 
@@ -47,9 +47,9 @@ def index():
 
     # get the user's goal from database
     with connect_to_database() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
-            goal = cur.fetchall()
+            with conn.cursor() as cur:
+                cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
+                goal = cur.fetchall()
 
     # get username
     with connect_to_database() as conn:
@@ -143,24 +143,27 @@ def register():
 
         # Check the username already exists
         # Query database for username
-        with connect_to_database() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM users WHERE name = %s", (username,))
-                user = cur.fetchall()
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM users WHERE name = %s", (username,))
+                    user = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
         
-
-
         if  len(user) != 0:
             return render_template("apology.html", msg="そのユーザーネームはすでに使われています")
 
         else:
             # Insert username and password hash to table
             password_hash = generate_password_hash(password)
-            cur = get_cursor()
-            cur.execute("INSERT INTO users (name, password_hash) VALUES (%s, %s)", (username, password_hash))
-            commit()
-            close_cursor()
-            close_connection()
+            try:
+                with connect_to_database() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("INSERT INTO users (name, password_hash) VALUES (%s, %s)", (username, password_hash))
+                    conn.commit()
+            except:
+                return render_template("apology.html", msg="失敗しました")
 
             # redirect log in page
             return redirect("/login")
