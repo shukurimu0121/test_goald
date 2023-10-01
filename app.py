@@ -8,8 +8,9 @@ import random
 import math
 import os
 import psycopg2
+from psycopg2.extras import DictCursor 
 
-DATABASE_URL = os.environ['DATABASE_URL']
+DATABASE_URL = "postgres://impqozswccdlby:ce334fbbbaa1d04826e044560d4db3704c3383d5d9d50e290672eb9ba4b3d95d@ec2-54-208-11-146.compute-1.amazonaws.com:5432/d8bs3degd70ahi"
 
 app = Flask(__name__)
 
@@ -48,24 +49,23 @@ def index():
     # get the user's goal from database
     try:
         with connect_to_database() as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT goal FROM goals WHERE user_id = %s", (user_id,))
-                    goal = cur.fetchall()
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+                goal = cur.fetchone()
     except:
         return render_template("apology.html", msg="失敗しました")
 
     # get username
     try:
         with connect_to_database() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))[0]["name"]
-                username = cur.fetchall()
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+                username = cur.fetchone()["name"]
     except:
         return render_template("apology.html", msg="失敗しました")
 
-    if len(goal) != 0:
-        user_goal = goal[0].goal
-        return render_template("index.html", goal=user_goal, username=username)
+    if goal:
+        return render_template("index.html", goal=goal["goal"], username=username)
     
     else:
         return render_template("index.html", username=username)
@@ -94,18 +94,18 @@ def login():
         # Get imput username from database
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM users WHERE name = %s", (username,))
-                    user = cur.fetchall()
+                    user = cur.fetchone()
         except:
             return render_template("apology.html", msg="失敗しました")
         
         # Check the username and password are correct
-        if len(user) != 1 or not check_password_hash(user[0].password_hash, password):
+        if not user or not check_password_hash(user["password_hash"], password):
             return render_template("apology.html", msg="不当なユーザーネームまたはパスワードです")
 
         # All OK add user to session
-        session["user_id"] = user[0].id
+        session["user_id"] = user["id"]
 
         # Redirect user to home page
         return redirect("/")
@@ -154,7 +154,7 @@ def register():
         # Query database for username
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM users WHERE name = %s", (username,))
                     user = cur.fetchall()
         except:
@@ -202,7 +202,7 @@ def make_room():
         # if the room id already exists, return apology
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
                     room = cur.fetchall()
         except:
@@ -223,7 +223,7 @@ def make_room():
         except:
             return render_template("apology.html", msg="失敗しました")
         
-        return redirect(url_for("room", room_id=room_id))
+        return redirect("/enter_room")
     
 
     # When GET
@@ -231,7 +231,7 @@ def make_room():
         # if user already join a room, tell it
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
                     room = cur.fetchall()
         except:
@@ -264,7 +264,7 @@ def enter_room():
         # check user submit goal
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
         except:
@@ -276,14 +276,14 @@ def enter_room():
         # Get room info from database)
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
                     room = cur.fetchall()
         except:
             return render_template("apology.html", msg="失敗しました")
 
         # Check the room id and password are correct
-        if len(room) == 0 or not check_password_hash(room[0].room_password_hash, room_password):
+        if len(room) == 0 or not check_password_hash(room[0]["room_password_hash"], room_password):
             return render_template("apology.html", msg="不当なルームIDまたはパスワードです")
         
         else:
@@ -299,16 +299,29 @@ def enter_room():
                 return render_template("apology.html", msg="失敗しました")
             
             return redirect(url_for("room", room_id=room_id))
+        
     # When GET
     else:
         """if user already join a room, redirect to room page"""
         # get the user's id
         user_id = session["user_id"]
 
+        # check user submit goal
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+                    goal = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
+
+        if len(goal) == 0:
+            return render_template("apology.html", msg="目標を設定してください")
+
         # get the user's room info from database
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
                     room = cur.fetchall()
         except:
@@ -316,7 +329,7 @@ def enter_room():
 
         # if user already join a room, redirect to room page
         if len(room) != 0:
-            return redirect(url_for("room", room_id=room[0].room_id))
+            return redirect(url_for("room", room_id=room[0]["room_id"]))
         
         else:
             return render_template("enter_room.html")
@@ -331,7 +344,7 @@ def room():
     #if the room does not exist, return apology
     try:
         with connect_to_database() as conn:
-            with conn.cursor() as cur:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
                 room = cur.fetchall()
     except:
@@ -343,7 +356,8 @@ def room():
     # if the user does not join the room, return apology
     room_users_ids = []
     for room_user in room:
-        room_users_ids.append(room_user.user_id)
+        room_users_ids.append(room_user["user_id"])
+
     if user_id not in room_users_ids:
         return render_template("apology.html", msg="このルームに参加していません")
     
@@ -353,12 +367,12 @@ def room():
         # 各user_idごとの目標と進捗率を取得し、辞書に追加
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (room_user_id,))
                     user_goals = cur.fetchall()
         except:
             return render_template("apology.html", msg="失敗しました")
-        user_goal_dicts = [{"goal": goal.goal, "progress_rate": goal.progress_rate, "user_id": goal.user_id, "deadline": goal.deadline} for goal in user_goals]
+        user_goal_dicts = [{"goal": goal["goal"], "progress_rate": goal["progress_rate"], "user_id": goal["user_id"], "deadline": goal["deadline"]} for goal in user_goals]
         goals.extend(user_goal_dicts)
     
     # get all members' username
@@ -366,9 +380,9 @@ def room():
     for room_user_id in room_users_ids:
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT name FROM users WHERE id = %s", (room_user_id,))[0]["name"]
-                    username = cur.fetchall()
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM users WHERE id = %s", (room_user_id,))
+                    username = cur.fetchone()["name"]
         except:
             return render_template("apology.html", msg="失敗しました")
         
@@ -424,6 +438,10 @@ def goal():
         date = request.form.get("date")
         time = request.form.get("time")
 
+        # When invalid input
+        if not goal or not date or not time:
+            return render_template("apology.html", msg="正しく入力してください")
+
         datetime_data = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M')
 
         # deadline to datetime
@@ -432,10 +450,6 @@ def goal():
         # date created
         date_created = datetime.now()
 
-        # When invalid input
-        if not goal or not date or not time:
-            return render_template("apology.html", msg="正しく入力してください")
-        
         # Put goal info to database
         try:
             with connect_to_database() as conn:
@@ -452,7 +466,7 @@ def goal():
         # if user already has a goal, display it
         try:
             with connect_to_database() as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
         except:
@@ -460,7 +474,7 @@ def goal():
 
         today = datetime.now().strftime('%Y-%m-%d')
         if len(goal) == 1:
-            return render_template("goal.html", goal=goal[0].goal, id=goal[0].id, progress_rate=goal[0].progress_rate, deadline=goal[0].deadline, today=today)
+            return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], deadline=goal[0]["deadline"], today=today)
         else:
             return render_template("goal.html", today=today)
         
@@ -507,5 +521,5 @@ def update_progress_rate():
     return redirect("/")
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
