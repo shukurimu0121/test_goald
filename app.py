@@ -10,7 +10,7 @@ import os
 import psycopg2
 from psycopg2.extras import DictCursor 
 
-DATABASE_URL = "postgres://impqozswccdlby:ce334fbbbaa1d04826e044560d4db3704c3383d5d9d50e290672eb9ba4b3d95d@ec2-54-208-11-146.compute-1.amazonaws.com:5432/d8bs3degd70ahi"
+DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__)
 
@@ -239,6 +239,18 @@ def make_room():
         
         if len(room) != 0:
             return render_template("make_room.html", msg="すでにルームに参加しています")
+        
+        # check user submit goal
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
+                    goal = cur.fetchall()
+        except:
+            return render_template("apology.html", msg="失敗しました")
+
+        if len(goal) == 0:
+            return render_template("apology.html", msg="目標を設定してください")
         
         else:
             return render_template("make_room.html")
@@ -521,5 +533,5 @@ def update_progress_rate():
     return redirect("/")
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
 
