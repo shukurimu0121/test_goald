@@ -10,7 +10,12 @@
             <h1>{{ goal }}</h1>
         </div>
         <div class="progress_rate mb-3">
-            <h3>達成率：{{ progress_rate }}%</h3>
+            <form action="/update_progress_rate" method="POST">
+                <label for="progress">達成率:{{ progress_rate }}%</label><br>
+                <input type="range" id="progress" name=progress min="0" max="100" step="1" value="{{progress_rate}}">
+                <output for="progress" id="progressValue">{{progress_rate}}%</output><br>
+                <input class="btn btn-primary" type="submit" value="更新">
+            </form>
         </div>
         <div class="progress_rate mb-3">
             <h3>あと<span id="remaining-time"></span></h3>
@@ -34,6 +39,14 @@
     {% endif %}
     <img src="/static/pan_767266.png" alt="pot" class="pot-img mx-auto my-5">
     <script>
+        // 達成率のスライダー
+        const progressSlider = document.getElementById('progress');
+        const progressValue = document.getElementById('progressValue');
+
+        progressSlider.addEventListener('input', () => {
+            progressValue.textContent = progressSlider.value + '%';
+        });
+        
         // Flaskから渡されたdeadline変数を取得
         var deadline = new Date("{{ deadline }}");
 
