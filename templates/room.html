@@ -37,7 +37,7 @@
                                 <h2 class="card-title">{{ goal.goal }}</h2>
                                 {% if goal.user_id == user_id %}
                                     <p id="deadline-{{ goal.user_id }}" class="hidden">{{ goal.deadline }}</p>
-                                    <p>あと<span id="remaining-time-{{ goal.user_id }}"></span></p>
+                                    <p><span id="remaining-time-{{ goal.user_id }}"></span></p>
                                     <form action="/update_progress_rate" method="POST">
                                         <label for="progress">達成率:{{ goal.progress_rate }}%</label><br>
                                         <input type="range" id="progress" name=progress min="0" max="100" step="1" value="{{goal.progress_rate}}">
@@ -46,7 +46,7 @@
                                     </form>
                                 {% else %}
                                     <p id="deadline-{{ goal.user_id }}" class="hidden">{{ goal.deadline }}</p>
-                                    <p>あと<span id="remaining-time-{{ goal.user_id }}"></span></p>
+                                    <p><span id="remaining-time-{{ goal.user_id }}"></span></p>
                                     <p>達成率:{{ goal.progress_rate }}%</p>
                                     <input type="range" min="0" max="100" step="1" value="{{goal.progress_rate}}" disabled><br>
                                 {% endif %}
@@ -94,7 +94,7 @@
                     var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
                     var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-                    element.textContent = days + "日 " + hours + "時間 " + minutes + "分 " + seconds + "秒";
+                    element.textContent = "あと" + days + "日 " + hours + "時間 " + minutes + "分 " + seconds + "秒";
                 }
             });
         }
