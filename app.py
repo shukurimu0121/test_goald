@@ -199,6 +199,10 @@ def make_room():
         if not room_id or not room_password:
             return render_template("apology.html", msg="ルームIDとパスワードを入力してください")
         
+        # when room id is mainus, return apology
+        if room_id < 0:
+            return render_template("apology.html", msg="ルームIDは正の整数を入力してください")
+        
         # if the room id already exists, return apology
         try:
             with connect_to_database() as conn:
@@ -272,6 +276,10 @@ def enter_room():
         # When invalid input
         if not room_id or not room_password:
             return render_template("apology.html", msg="ルームIDとパスワードを入力してください")
+        
+        # when room id is mainus, return apology
+        if room_id < 0:
+            return render_template("apology.html", msg="ルームIDは正の整数を入力してください")
         
         # check user submit goal
         try:
@@ -518,6 +526,15 @@ def update_progress_rate():
     # get user id
     user_id = session["user_id"]
 
+    # get room id user in
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+                room = cur.fetchall()
+    except:
+        return render_template("apology.html", msg="失敗しました")
+
     # get progress rate
     progress_rate = int(request.form.get("progress"))
 
@@ -530,7 +547,7 @@ def update_progress_rate():
     except:
         return render_template("apology.html", msg="失敗しました")
     
-    return redirect("/")
+    return redirect(url_for("room", room_id=room[0]["room_id"]))
 
 if __name__ == '__main__':
     app.run()
