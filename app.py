@@ -551,7 +551,13 @@ def update_progress_rate():
     except:
         return render_template("apology.html", msg="失敗しました")
     
-    return redirect(url_for("room", room_id=room[0]["room_id"]))
+    # if user in a room, redirect to room page
+    if len(room) != 0:
+        return redirect(url_for("room", room_id=room[0]["room_id"]))
+    
+    # if user not in a room, redirect to goal page
+    else:
+        return redirect("/goal")
 
 if __name__ == '__main__':
     app.run()
