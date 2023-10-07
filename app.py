@@ -10,7 +10,11 @@ import os
 import psycopg2
 from psycopg2.extras import DictCursor 
 
-DATABASE_URL = os.environ['DATABASE_URL']
+# localhost 
+DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
+
+# deploy on heroku
+# DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__)
 

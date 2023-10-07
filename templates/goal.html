@@ -18,7 +18,7 @@
             </form>
         </div>
         <div class="progress_rate mb-3">
-            <h3>あと<span id="remaining-time"></span></h3>
+            <h3><span id="remaining-time"></span></h3>
         </div>
         <form action="/delete_goal" method="post">
             <input name="goal_id" type="hidden" value="{{ id }}">
@@ -31,8 +31,8 @@
         </div>
         <div class="mb-3">
             <label for="deadline" class="form-label">期限</label>
-            <input type="date" name="date" value="{{ today }}" min="{{ today }}">
-            <input type="time" name="time">
+            <input class="date" type="date" name="date" value="{{ today }}" min="{{ today }}" >
+            <input class="time" type="time" name="time">
         </div>
         <button class="btn btn-primary" type="submit">宣言</button>
     </form>
@@ -62,7 +62,7 @@
                 var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
                 var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
 
-                document.getElementById("remaining-time").textContent = days + "日 " + hours + "時間 " + minutes + "分 " + seconds + "秒";
+                document.getElementById("remaining-time").textContent = "あと" + days + "日 " + hours + "時間 " + minutes + "分 " + seconds + "秒";
             }
         }
 
