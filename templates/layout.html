@@ -31,9 +31,11 @@
                 <div class="collapse navbar-collapse" id="navbar">
                     {% if session["user_id"] %}
                         <ul class="navbar-nav me-auto mt-2">
-                            <li class="nav-item"><a class="nav-link" href="/make_room">作成</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/enter_room">入室</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/goal">目標</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/make_room">部屋を作る</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/enter_room">部屋に入る</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/goal">目標を宣言</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/notion">お知らせ</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/profile">プロフィール</a></li>
                         </ul>
                         <ul class="navbar-nav ms-auto mt-2">
                             <li class="nav-item"><a class="nav-link text-danger" href="/logout">ログアウト</a></li>

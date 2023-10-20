@@ -11,10 +11,10 @@ import psycopg2
 from psycopg2.extras import DictCursor 
 
 # localhost 
-# DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
+DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
 
 # deploy on heroku
-DATABASE_URL = os.environ['DATABASE_URL']
+# DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__)
 
@@ -49,6 +49,8 @@ def login_required(f):
 def index():
     # show users goal
     user_id = session["user_id"]
+
+    # if users goal deadline is passed, notify it
 
     # get the user's goal from database
     try:
@@ -475,10 +477,21 @@ def goal():
         date_created = datetime.now()
 
         # Put goal info to database
+        # put into goals table
         try:
             with connect_to_database() as conn:
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO goals (goal, date_created, deadline, user_id) VALUES (%s, %s, %s, %s)", (goal, date_created, deadline, user_id))
+                conn.commit()
+        except:
+            return render_template("apology.html", msg="失敗しました")
+        
+        # put into goals_history table
+        default_progress_rate = 0
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("INSERT INTO goals_history (goal, user_id, progress_rate) VALUES (%s, %s, %s)", (goal, user_id, default_progress_rate))
                 conn.commit()
         except:
             return render_template("apology.html", msg="失敗しました")
@@ -543,10 +556,21 @@ def update_progress_rate():
     progress_rate = int(request.form.get("progress"))
 
     # update progress rate
+    # update goals table
     try:
         with connect_to_database() as conn:
             with conn.cursor() as cur:
                 cur.execute("UPDATE goals SET progress_rate = %s WHERE user_id = %s", (progress_rate, user_id))
+            conn.commit()
+    except:
+        return render_template("apology.html", msg="失敗しました")
+    
+    # update goals_history table
+    try:
+        with connect_to_database() as conn:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("UPDATE goals_history SET progress_rate = %s WHERE user_id = %s", (progress_rate, user_id))
             conn.commit()
     except:
         return render_template("apology.html", msg="失敗しました")
@@ -558,7 +582,71 @@ def update_progress_rate():
     # if user not in a room, redirect to goal page
     else:
         return redirect("/goal")
+    
+# notion route
+@app.route("/notion")
+@login_required
+def notion():
+    """notion"""
+    return render_template("notion.html")
+
+# update deadline route
+@app.route("/update_deadline", methods=["POST"])
+@login_required
+def update_deadline():
+    # get user id
+    user_id = session["user_id"]
+
+    # get new deadline from users input
+    date = request.form.get("date")
+    time = request.form.get("time")
+
+    # When invalid input
+    if not date or not time:
+        return render_template("apology.html", msg="正しく入力してください")
+    
+    new_deadline = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M')
+
+    # update user's goal deadline
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE goals SET deadline = %s WHERE user_id = %s", (new_deadline, user_id))
+            conn.commit()
+    except:
+        return render_template("apology.html", msg="失敗しました")
+    
+    return redirect("/goal")
+
+# profile route
+@app.route("/profile")
+@login_required
+def profile():
+    """profile"""
+    # get user id
+    user_id = session["user_id"]
+
+    # get username  
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+                username = cur.fetchone()["name"]
+    except:
+        return render_template("apology.html", msg="失敗しました")
+
+    # get user's goal history
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM goals_history WHERE user_id = %s", (user_id,))
+                goals_history = cur.fetchall()
+    except:
+        return render_template("profile.html")
+
+    return render_template("profile.html", username=username, goals_history=goals_history)
+
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
