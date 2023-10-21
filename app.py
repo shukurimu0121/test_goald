@@ -860,7 +860,7 @@ def get_ranking():
 # get progress rate ranking in each room every day at 8:00 and 18:00
 schedule.every().day.at("10:00").do(send_line_message)
 schedule.every().day.at("20:00").do(send_line_message)
-schedule.every().day.at("8:00").do(get_ranking)
+schedule.every().day.at("08:00").do(get_ranking)
 schedule.every().day.at("18:00").do(get_ranking)
 
 # run app 
