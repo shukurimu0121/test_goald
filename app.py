@@ -8,6 +8,9 @@ import random
 import math
 import os
 import psycopg2
+import schedule
+from time import sleep
+import time
 from psycopg2.extras import DictCursor
 from linebot import (
     LineBotApi, WebhookHandler
@@ -686,12 +689,188 @@ def callback():
 # Message handler
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    line_bot_api.reply_message(
+    # if text message is "部屋を登録する", reply "部屋番号を入力してください"
+    if event.message.text == "部屋を登録する":
+        line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text=event.message.text))
+        TextSendMessage(text="部屋番号を入力してください"))
+
+    # if reply message is integer, save it and userId to database
+    if event.message.text.isdecimal():
+        # get user LINE id
+        line_user_id = event.source.user_id
+
+        # if the user already exists, return apology
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                    user = cur.fetchall()
+        except:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="失敗しました")
+            )
         
+        if len(user) != 0:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="すでに登録されています")
+            )
+            
+        # get room id from user's input
+        room_id = int(event.message.text) 
+
+        # if the room does not exist, return apology
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+                    room = cur.fetchall()
+        except:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="失敗しました")
+            )
+        
+        if len(room) == 0:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="そのルームは存在しません")
+            )
+        
+        # save user LINE id and room id to database
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("INSERT INTO line_users (line_user_id, room_id) VALUES (%s, %s)", (line_user_id, room_id))
+                conn.commit()
+        except:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="失敗しました")
+            )
+
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="登録しました")
+        )
+
+    # if text message is "部屋を解除する", delete from database
+    if event.message.text == "部屋を解除する":
+        # get user LINE id
+        line_user_id = event.source.user_id
+
+        # delete from database
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                conn.commit()
+        except:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="失敗しました")
+            )
+        
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="解除しました")
+        )
 
 
+# send line message
+def send_line_message():
+    # get all users LINE id and room id
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM line_users")
+                line_users = cur.fetchall()
+    except:
+        return 404
+    
+    # send message to all users
+    for line_user in line_users:
+        # get user's room id
+        room_id = line_user["room_id"]
+
+        # get ranking info
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM ranking WHERE room_id = %s", (room_id,))
+                    ranking = cur.fetchone()
+        except:
+            return 404
+        
+        # get best goal and worst goal
+        best_goal = ranking["best_goal"]
+        worst_goal = ranking["worst_goal"]
+
+        # send message
+        line_bot_api.push_message(
+            line_user["line_user_id"],
+            TextSendMessage(text="現在の目標達成率ランキング\n1位: " + best_goal + "\n最下位: " + worst_goal)
+        )
+
+
+# get progress rate ranking in each room
+def get_ranking():
+    # get all rooms in line_users table
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT DISTINCT room_id FROM line_users")
+                rooms = cur.fetchall()
+    except:
+        return 404
+    
+    # get all users in each room
+    for room in rooms:
+        # get best progress rate and worst one in each room
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM goals WHERE user_id IN (SELECT user_id FROM rooms WHERE room_id = %s) ORDER BY progress_rate DESC", (room["room_id"],))
+                    best_goal = cur.fetchone()["goal"]
+                    cur.execute("SELECT * FROM goals WHERE user_id IN (SELECT user_id FROM rooms WHERE room_id = %s) ORDER BY progress_rate ASC", (room["room_id"],))
+                    worst_goal = cur.fetchone()["goal"]
+        except:
+            return 404
+        
+        
+        # update room_id and best goal and worst goal to database named ranking
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("UPDATE ranking SET room_id = %s, best_goal = %s, worst_goal = %s WHERE room_id = %s", (room["room_id"], best_goal, worst_goal, room["room_id"]))
+                conn.commit()
+        except:
+            try:
+                with connect_to_database() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("INSERT INTO ranking (room_id, best_goal, worst_goal) VALUES (%s, %s, %s)", (room["room_id"], best_goal, worst_goal))
+                    conn.commit()
+            except:
+                return 404
+            
+
+# send line message every day at 10:00 and 20:00
+# get progress rate ranking in each room every day at 8:00 and 18:00
+schedule.every().day.at("10:00").do(send_line_message)
+schedule.every().day.at("20:00").do(send_line_message)
+schedule.every().day.at("8:00").do(get_ranking)
+schedule.every().day.at("18:00").do(get_ranking)
+
+# run app 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
+
+# run schedule
+while True:
+    schedule.run_pending()
+    time.sleep(1)   
+
+
 
