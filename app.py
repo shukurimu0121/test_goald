@@ -699,15 +699,16 @@ def handle_message(event):
             conn.commit()
     except:
         return 404
-    
-    # get top3 goals and worst3 goals
-    best_goals, worst_goals = get_ranking()
 
-    # send message to user
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=f"現在の達成率ランキングTOP3とワースト3！\nトップ3\n1:{best_goals[0][0]}\n2:{best_goals[1][0]}\n3:{best_goals[2][0]}\nワースト3\n3:{worst_goals[0][0]}\n2:{worst_goals[1][0]}\n1:{worst_goals[2][0]}\n\n" + APP_URL)
-    )
+    if event.message.text == "ランキング":
+        # get top3 goals and worst3 goals
+        best_goals, worst_goals = get_ranking()
+        
+        # send message to user
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=f"現在の達成率ランキングTOP3とワースト3！\n\nトップ3\n1:{best_goals[0][0]}\n2:{best_goals[1][0]}\n3:{best_goals[2][0]}\n\nワースト3\n1:{worst_goals[2][0]}\n2:{worst_goals[1][0]}\n3:{worst_goals[0][0]}\n\n" + APP_URL)
+        )
 
     return 200
 
@@ -743,14 +744,20 @@ def send_message():
     for user in users:
         line_bot_api.push_message(
             user["line_user_id"],
-            TextSendMessage(text=f"現在の達成率ランキングTOP3とワースト3！\nトップ3\n1:{best_goals[0][0]}\n2:{best_goals[1][0]}\n3:{best_goals[2][0]}\nワースト3\n3:{worst_goals[0][0]}\n2:{worst_goals[1][0]}\n1:{worst_goals[2][0]}\n\n" + APP_URL)
+            TextSendMessage(text=f"現在の達成率ランキングTOP3とワースト3！\n\nトップ3\n1:{best_goals[0][0]}\n2:{best_goals[1][0]}\n3:{best_goals[2][0]}\n\nワースト3\n1:{worst_goals[2][0]}\n2:{worst_goals[1][0]}\n3:{worst_goals[0][0]}\n\n" + APP_URL)
         )
 
     return 200
 
+# schedule
+schedule.every().day.at("18:00").do(send_message)
+
 # run app
 if __name__ == "__main__":
     app.run(debug=True)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 
 
