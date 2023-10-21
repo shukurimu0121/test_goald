@@ -751,11 +751,7 @@ def send_message():
 # run app
 if __name__ == "__main__":
     app.run(debug=True)
-    
-# schedule.every().day.at("10:00").do(send_message) and schedule.every().day.at("20:00").do(send_message)
-while True:
-    schedule.run_pending()
-    sleep(1)
+
 
 
 
