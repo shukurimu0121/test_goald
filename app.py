@@ -692,7 +692,7 @@ def callback():
 def handle_message(event):
     # line menu message
     # 部屋を登録
-    if event.message.text == "部屋を登録" or "登録を解除":
+    if event.message.text == "部屋を登録" or event.message.text == "登録を解除":
         # 部屋番号を入力してくださいと返信
         line_bot_api.reply_message(
             event.reply_token,
