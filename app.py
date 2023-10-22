@@ -690,27 +690,115 @@ def callback():
 # Message handler
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    # save user's line id
-    user_id = event.source.user_id
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor() as cur:
-                cur.execute("INSERT INTO line_users (line_user_id) VALUES (%s)", (user_id,))
-            conn.commit()
-    except:
-        return 404
-
-    if event.message.text == "ランキング":
-        # get top3 goals and worst3 goals
-        best_goals, worst_goals = get_ranking()
-        
-        # send message to user
+    # line menu message
+    # 部屋を登録
+    if event.message.text == "部屋を登録" or "登録を解除":
+        # 部屋番号を入力してくださいと返信
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=f"現在の達成率ランキングTOP3とワースト3！\n\nトップ3\n1:{best_goals[0][0]}\n2:{best_goals[1][0]}\n3:{best_goals[2][0]}\n\nワースト3\n1:{worst_goals[2][0]}\n2:{worst_goals[1][0]}\n3:{worst_goals[0][0]}\n\n" + APP_URL)
+            TextSendMessage(text="部屋番号を入力してください")
+        )
+    
+    # 正の整数が入力されたとき
+    if event.message.text.isdigit():
+        line_user_id = event.source.user_id
+        room_id = int(event.message.text)
+
+        # 有効な部屋番号か確認
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+                    room = cur.fetchall()
+        except:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="失敗しました")
+            )
+
+        # 無効な部屋番号の場合
+        if len(room) == 0:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="無効な部屋番号です")
+            )
+        
+        # 既に部屋に登録されているか確認
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                    line_user = cur.fetchall()
+        except:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="失敗しました")
+            )
+        
+        # 既に部屋に登録されている場合、room_idを更新
+        if len(line_user) != 0:
+            try:
+                with connect_to_database() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("UPDATE line_users SET room_id = %s WHERE line_user_id = %s", (room_id, line_user_id))
+                    conn.commit()
+            except:
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="失敗しました")
+                )
+            
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="部屋番号を更新しました")
+            )
+        
+        # 部屋に登録されていない場合、部屋を登録
+        else:
+            try:
+                with connect_to_database() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("INSERT INTO line_users (line_user_id, room_id) VALUES (%s, %s)", (line_user_id, room_id))
+                    conn.commit()
+            except:
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="失敗しました")
+                )
+            
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="部屋番号を登録しました")
+            )
+    
+    # エールを送る
+    if event.message.text == "エールを送る":
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="メニュー\n\n・目標を設定する\n・目標を削除する\n・目標の進捗を更新する\n・目標の締め切りを更新する\n・目標の達成率を確認する\n・目標の達成率ランキングを確認する\n・目標の達成率ランキングを毎日18時に送る")
+        )
+    
+    # 使い方
+    if event.message.text == "使い方":
+        how_to_use_text = "部屋を登録：参加中のルームIDを入力して部屋を登録します\n登録を解除：登録している部屋を解除します\nエールを送る：部屋に参加しているメンバーにエールを送ります\n使い方：使い方を表示します\nやる気がなくなった：やる気がなくなったときのヒントを表示します\nアプリ：アプリへ移動します"
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=how_to_use_text)
         )
 
-    return 200
+    # やる気がなくなった
+    if event.message.text == "やる気がなくなった":
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="メニュー\n\n・目標を設定する\n・目標を削除する\n・目標の進捗を更新する\n・目標の締め切りを更新する\n・目標の達成率を確認する\n・目標の達成率ランキングを確認する\n・目標の達成率ランキングを毎日18時に送る")
+        )
+
+    # else
+    else:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="個別のメッセージには対応していません。使い方を参考に、メニュー画面を操作してください。")
+        )
 
 def get_ranking():
     # get best3 goals and worst3 goals
