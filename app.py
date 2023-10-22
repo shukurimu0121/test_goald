@@ -692,11 +692,18 @@ def callback():
 def handle_message(event):
     # line menu message
     # 部屋を登録
-    if event.message.text == "部屋を登録" or event.message.text == "登録を解除":
+    if event.message.text == "部屋を登録":
         # 部屋番号を入力してくださいと返信
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="部屋番号を入力してください")
+        )
+
+    if event.message.text == "登録を解除":
+        # 新しい部屋番号を入力してくださいと返信
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="新しい部屋番号を入力してください")
         )
     
     # 正の整数が入力されたとき
@@ -785,12 +792,22 @@ def handle_message(event):
             event.reply_token,
             TextSendMessage(text=how_to_use_text)
         )
+    
+    # やる気がなくなったとき用のヒント
+    TIPS = ["目標が難しすぎると、やる気がなくなります。目標を小さく設定してみましょう。",
+            "ポモドーロテクニックを試してみましょう。25分間集中して作業し、5分間休憩します。これを繰り返します。",
+            "目標を達成するためには、習慣化が必要です。毎日少しずつでも続けてみましょう。",
+            "何のために目標を設定したのか、最終的な目標は何かを思い出しましょう。",
+            "目標を達成することがどう自分の人生に影響するかを考えてみましょう。"
+            ]
 
     # やる気がなくなった
     if event.message.text == "やる気がなくなった":
+        # ランダムにヒントを表示
+        tip = random.choice(TIPS)
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="メニュー\n\n・目標を設定する\n・目標を削除する\n・目標の進捗を更新する\n・目標の締め切りを更新する\n・目標の達成率を確認する\n・目標の達成率ランキングを確認する\n・目標の達成率ランキングを毎日18時に送る")
+            TextSendMessage(text=tip)
         )
 
     # else
@@ -801,18 +818,64 @@ def handle_message(event):
         )
 
 def get_ranking():
-    # get best3 goals and worst3 goals
+    # get best3 goals and worst3 goals in each room from database
+    # get all rooms
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT goal FROM goals ORDER BY progress_rate DESC LIMIT 3")
-                best_goals = cur.fetchall()
-                cur.execute("SELECT goal FROM goals ORDER BY progress_rate ASC LIMIT 3")
-                worst_goals = cur.fetchall()
+                cur.execute("SELECT DISTINCT room_id FROM line_users")
+                rooms = cur.fetchall()
     except:
         return 404
+    
+    # get best3 goals and worst3 goals in each room
+    for room in rooms:
+        # get all goals in the room
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM goals WHERE user_id IN (SELECT user_id FROM rooms WHERE room_id = %s)", (room["room_id"],))
+                    goals = cur.fetchall()
+        except:
+            return 404
+        
+        # sort goals by progress rate
+        goals = sorted(goals, key=lambda x: x["progress_rate"], reverse=True)
 
-    return best_goals, worst_goals
+        # get best goal and worst goal
+        best_goal = goals[0]["goal"]
+        worst_goal = goals[-1]["goal"]
+
+        # check if the room already exists in ranking table
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM ranking WHERE room_id = %s", (room["room_id"],))
+                    ranking = cur.fetchall()
+        except:
+            return 404
+        
+        # if the room already exists in ranking table, update best goal and worst goal
+
+        if len(ranking) != 0:
+            try:
+                with connect_to_database() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("UPDATE ranking SET best_goal = %s, worst_goal = %s WHERE room_id = %s", (best_goal, worst_goal, room["room_id"]))
+                    conn.commit()
+            except Exception as e:
+                return str(e)
+        
+        # if the room does not exist in ranking table, insert best goal and worst goal
+        else:
+            # save best goal and worst goal and room id to database
+            try:
+                with connect_to_database() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("INSERT INTO ranking (room_id, best_goal, worst_goal) VALUES (%s, %s, %s)", (room["room_id"], best_goal, worst_goal))
+                    conn.commit()
+            except Exception as e:
+                return str(e)
 
 # send message to user every day
 def send_message():
@@ -822,23 +885,58 @@ def send_message():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT DISTINCT line_user_id FROM line_users")
                 users = cur.fetchall()
-    except:
-        return 404
+    except Exception as e:
+        return str(e)
     
-    # get top3 goals and worst3 goals
-    best_goals, worst_goals = get_ranking()
+    # get best goal and worst goal in each room from database
+    get_ranking()
 
-    # send message to user
+    # send message to each user
     for user in users:
+        line_user_id = user["line_user_id"]
+
+        # get user's room id
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                    line_user = cur.fetchall()
+        except Exception as e:
+            return str(e)
+        
+        # if the user does not join a room, skip
+        if len(line_user) == 0:
+            continue
+        
+        # get user's room id
+        room_id = line_user[0]["room_id"]
+
+        # get best goal and worst goal in the room
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM ranking WHERE room_id = %s", (room_id,))
+                    ranking = cur.fetchall()
+        except Exception as e:
+            return str(e)
+        
+        # if the room does not exist in ranking table, skip
+        if len(ranking) == 0:
+            continue
+        
+        # get best goal and worst goal
+        best_goal = ranking[0]["best_goal"]
+        worst_goal = ranking[0]["worst_goal"]
+
+        # send message to user
         line_bot_api.push_message(
-            user["line_user_id"],
-            TextSendMessage(text=f"現在の達成率ランキングTOP3とワースト3！\n\nトップ3\n1:{best_goals[0][0]}\n2:{best_goals[1][0]}\n3:{best_goals[2][0]}\n\nワースト3\n1:{worst_goals[2][0]}\n2:{worst_goals[1][0]}\n3:{worst_goals[0][0]}\n\n" + APP_URL)
+            line_user_id,
+            TextSendMessage(text=f"今日の目標達成率ランキング\n\n1位：{best_goal}\n\n最下位：{worst_goal}")
         )
 
-    return 200
 
 # schedule
-schedule.every().day.at("18:00").do(send_message)
+schedule.every().day.at("21:00").do(send_message)
 
 # run app
 if __name__ == "__main__":
