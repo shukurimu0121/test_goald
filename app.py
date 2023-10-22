@@ -710,10 +710,10 @@ def handle_message(event):
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
                     room = cur.fetchall()
-        except:
+        except Exception as e:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="失敗しました")
+                TextSendMessage(text=f"エラー: {str(e)}")
             )
 
         # 無効な部屋番号の場合
@@ -729,10 +729,10 @@ def handle_message(event):
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
                     line_user = cur.fetchall()
-        except:
+        except Exception as e:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="失敗しました")
+                TextSendMessage(text=f"エラー: {str(e)}")
             )
         
         # 既に部屋に登録されている場合、room_idを更新
@@ -742,10 +742,10 @@ def handle_message(event):
                     with conn.cursor() as cur:
                         cur.execute("UPDATE line_users SET room_id = %s WHERE line_user_id = %s", (room_id, line_user_id))
                     conn.commit()
-            except:
+            except Exception as e:
                 line_bot_api.reply_message(
                     event.reply_token,
-                    TextSendMessage(text="失敗しました")
+                    TextSendMessage(text=f"エラー: {str(e)}")
                 )
             
             line_bot_api.reply_message(
@@ -760,10 +760,10 @@ def handle_message(event):
                     with conn.cursor() as cur:
                         cur.execute("INSERT INTO line_users (line_user_id, room_id) VALUES (%s, %s)", (line_user_id, room_id))
                     conn.commit()
-            except:
+            except Exception as e:
                 line_bot_api.reply_message(
                     event.reply_token,
-                    TextSendMessage(text="失敗しました")
+                    TextSendMessage(text=f"エラー: {str(e)}")
                 )
             
             line_bot_api.reply_message(
