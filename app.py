@@ -818,7 +818,7 @@ def handle_message(event):
             TextSendMessage(text="個別のメッセージには対応していません。使い方を参考に、メニュー画面を操作してください。")
         )
 
-# Push message to all line users
+# Push message to the line users
 def push_progress_message(line_user_id):
     # where user in a room
     try:
@@ -827,7 +827,11 @@ def push_progress_message(line_user_id):
                 cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
                 line_user = cur.fetchall()
     except Exception as e:
-        print(f"エラー: {str(e)}")
+        # send error to the line user
+        line_bot_api.push_message(
+            line_user_id,
+            TextSendMessage(text=f"エラー: {str(e)}")
+        )
     
     # get goals and progress rate in the room, and sort by progress rate
     try:
@@ -836,7 +840,11 @@ def push_progress_message(line_user_id):
                 cur.execute("SELECT user_id FROM rooms WHERE room_id = %s", (line_user[0]["room_id"],))
                 user_ids = cur.fetchall()
     except Exception as e:
-        print(f"エラー: {str(e)}")
+        # send error to the line user
+        line_bot_api.push_message(
+            line_user_id,
+            TextSendMessage(text=f"エラー: {str(e)}")
+        )
 
     # get goals and progress rate in the room, and sort by progress rate
     try:
@@ -845,7 +853,11 @@ def push_progress_message(line_user_id):
                 cur.execute("SELECT * FROM goals WHERE user_id IN %s ORDER BY progress_rate DESC", (user_ids,))
                 users_goals_info = cur.fetchall()
     except Exception as e:
-        print(f"エラー: {str(e)}")
+        # send error to the line user
+        line_bot_api.push_message(
+            line_user_id,
+            TextSendMessage(text=f"エラー: {str(e)}")
+        )
 
     # count the number of members
     number_of_members = len(users_goals_info)
@@ -862,7 +874,11 @@ def push_progress_message(line_user_id):
         )        
 
     except Exception as e:
-        print(f"エラー: {str(e)}")
+        # send error to the line user
+        line_bot_api.push_message(
+            line_user_id,
+            TextSendMessage(text=f"エラー: {str(e)}")
+        )
 
 
 
