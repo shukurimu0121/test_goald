@@ -850,7 +850,7 @@ def push_progress_message(line_user_id):
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT * FROM goals WHERE user_id IN %s ORDER BY progress_rate DESC", (user_ids,))
+                cur.execute("SELECT * FROM goals WHERE user_id IN %s ORDER BY progress_rate DESC", (tuple(user_ids),))
                 users_goals_info = cur.fetchall()
     except Exception as e:
         # send error to the line user
