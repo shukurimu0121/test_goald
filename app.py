@@ -780,10 +780,11 @@ def handle_message(event):
     
     # エールを送る
     if event.message.text == "エールを送る":
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="メニュー\n\n・目標を設定する\n・目標を削除する\n・目標の進捗を更新する\n・目標の締め切りを更新する\n・目標の達成率を確認する\n・目標の達成率ランキングを確認する\n・目標の達成率ランキングを毎日18時に送る")
-        )
+        # get line user id
+        line_user_id = event.source.user_id
+
+        # push message to the line user
+        push_progress_message(line_user_id)
     
     # 使い方
     if event.message.text == "使い方":
@@ -817,126 +818,53 @@ def handle_message(event):
             TextSendMessage(text="個別のメッセージには対応していません。使い方を参考に、メニュー画面を操作してください。")
         )
 
-def get_ranking():
-    # get best3 goals and worst3 goals in each room from database
-    # get all rooms
+# Push message to all line users
+def push_progress_message(line_user_id):
+    # where user in a room
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT DISTINCT room_id FROM line_users")
-                rooms = cur.fetchall()
-    except:
-        return 404
-    
-    # get best3 goals and worst3 goals in each room
-    for room in rooms:
-        # get all goals in the room
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
-                    cur.execute("SELECT * FROM goals WHERE user_id IN (SELECT user_id FROM rooms WHERE room_id = %s)", (room["room_id"],))
-                    goals = cur.fetchall()
-        except:
-            return 404
-        
-        # sort goals by progress rate
-        goals = sorted(goals, key=lambda x: x["progress_rate"], reverse=True)
-
-        # get best goal and worst goal
-        best_goal = goals[0]["goal"]
-        worst_goal = goals[-1]["goal"]
-
-        # check if the room already exists in ranking table
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
-                    cur.execute("SELECT * FROM ranking WHERE room_id = %s", (room["room_id"],))
-                    ranking = cur.fetchall()
-        except:
-            return 404
-        
-        # if the room already exists in ranking table, update best goal and worst goal
-
-        if len(ranking) != 0:
-            try:
-                with connect_to_database() as conn:
-                    with conn.cursor() as cur:
-                        cur.execute("UPDATE ranking SET best_goal = %s, worst_goal = %s WHERE room_id = %s", (best_goal, worst_goal, room["room_id"]))
-                    conn.commit()
-            except Exception as e:
-                return str(e)
-        
-        # if the room does not exist in ranking table, insert best goal and worst goal
-        else:
-            # save best goal and worst goal and room id to database
-            try:
-                with connect_to_database() as conn:
-                    with conn.cursor() as cur:
-                        cur.execute("INSERT INTO ranking (room_id, best_goal, worst_goal) VALUES (%s, %s, %s)", (room["room_id"], best_goal, worst_goal))
-                    conn.commit()
-            except Exception as e:
-                return str(e)
-
-# send message to user every day
-def send_message():
-    # get all users line id
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT DISTINCT line_user_id FROM line_users")
-                users = cur.fetchall()
+                cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                line_user = cur.fetchall()
     except Exception as e:
-        return str(e)
+        print(f"エラー: {str(e)}")
     
-    # get best goal and worst goal in each room from database
-    get_ranking()
+    # get goals and progress rate in the room, and sort by progress rate
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT user_id FROM rooms WHERE room_id = %s", (line_user[0]["room_id"],))
+                user_ids = cur.fetchall()
+    except Exception as e:
+        print(f"エラー: {str(e)}")
 
-    # send message to each user
-    for user in users:
-        line_user_id = user["line_user_id"]
+    # get goals and progress rate in the room, and sort by progress rate
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM goals WHERE user_id IN %s ORDER BY progress_rate DESC", (user_ids,))
+                users_goals_info = cur.fetchall()
+    except Exception as e:
+        print(f"エラー: {str(e)}")
 
-        # get user's room id
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
-                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
-                    line_user = cur.fetchall()
-        except Exception as e:
-            return str(e)
-        
-        # if the user does not join a room, skip
-        if len(line_user) == 0:
-            continue
-        
-        # get user's room id
-        room_id = line_user[0]["room_id"]
+    # count the number of members
+    number_of_members = len(users_goals_info)
 
-        # get best goal and worst goal in the room
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
-                    cur.execute("SELECT * FROM ranking WHERE room_id = %s", (room_id,))
-                    ranking = cur.fetchall()
-        except Exception as e:
-            return str(e)
-        
-        # if the room does not exist in ranking table, skip
-        if len(ranking) == 0:
-            continue
-        
-        # get best goal and worst goal
-        best_goal = ranking[0]["best_goal"]
-        worst_goal = ranking[0]["worst_goal"]
-
-        # send message to user
+    # push message to the line user
+    try:
+        # send members' goals and progress rate to the line user
+        message = f"今日の目標達成率ランキング\n\n"
+        for i in range(number_of_members):
+            message += f"{i+1}位：{users_goals_info[i]['goal']} {users_goals_info[i]['progress_rate']}%\n"
         line_bot_api.push_message(
             line_user_id,
-            TextSendMessage(text=f"今日の目標達成率ランキング\n\n1位：{best_goal}\n\n最下位：{worst_goal}")
-        )
+            TextSendMessage(text=message)
+        )        
+
+    except Exception as e:
+        print(f"エラー: {str(e)}")
 
 
-# schedule
-schedule.every().day.at("21:00").do(send_message)
 
 # run app
 if __name__ == "__main__":
