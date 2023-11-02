@@ -837,8 +837,8 @@ def push_progress_message(line_user_id):
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT user_id FROM rooms WHERE room_id = %s", (line_user[0]["room_id"],))
-                user_ids = cur.fetchall()
+                cur.execute("SELECT * FROM rooms WHERE room_id = %s", (line_user[0]["room_id"],))
+                user_ids = cur.fetchall()["user_id"]
     except Exception as e:
         # send error to the line user
         line_bot_api.push_message(
