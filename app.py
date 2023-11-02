@@ -659,6 +659,11 @@ def profile():
     return render_template("profile.html", username=username, goals_history=goals_history)
 
 
+# cheer button route
+
+
+
+
 # linebot 
 #Token取得
 
@@ -865,7 +870,7 @@ def push_progress_message(line_user_id):
     # push message to the line user
     try:
         # send members' goals and progress rate to the line user
-        message = f"現在の目標達成率ランキング\n\n"
+        message = f"現在のランキングをお知らせします\n\n"
         for i in range(number_of_members):
             message += f"{i+1}位：{users_goals_info[i]['goal']} {users_goals_info[i]['progress_rate']}%\n"
         line_bot_api.push_message(
@@ -880,7 +885,23 @@ def push_progress_message(line_user_id):
             TextSendMessage(text=f"エラー: {str(e)}")
         )
 
+# scheduled message to the line users
+def schedule_message():
+    # get all line users
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM line_users")
+                line_users = cur.fetchall()
+    except Exception as e:
+        return str(e)
+    
+    # push message to the line users
+    for line_user in line_users:
+        push_progress_message(line_user["line_user_id"])
 
+# register scheduled message
+schedule.every().day.at("20:00").do(schedule_message)
 
 # run app
 if __name__ == "__main__":
