@@ -778,8 +778,8 @@ def handle_message(event):
                 TextSendMessage(text="部屋番号を登録しました")
             )
     
-    # エールを送る
-    if event.message.text == "エールを送る":
+    # ランキング
+    if event.message.text == "ランキング":
         # get line user id
         line_user_id = event.source.user_id
 
@@ -788,7 +788,7 @@ def handle_message(event):
     
     # 使い方
     if event.message.text == "使い方":
-        how_to_use_text = "部屋を登録：参加中のルームIDを入力して部屋を登録します\n登録を解除：登録している部屋を解除します\nエールを送る：部屋に参加しているメンバーにエールを送ります\n使い方：使い方を表示します\nやる気がなくなった：やる気がなくなったときのヒントを表示します\nアプリ：アプリへ移動します"
+        how_to_use_text = "部屋を登録：参加中のルームIDを入力して部屋を登録します\n登録を解除：登録している部屋を解除して、新たな部屋を登録します。\nランキング：部屋に参加しているメンバーの目標達成率ランキングを表示します\n使い方：使い方を表示します\nやる気がなくなった：やる気がなくなったときのヒントを表示します\nアプリ：アプリへ移動します"
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text=how_to_use_text)
@@ -865,7 +865,7 @@ def push_progress_message(line_user_id):
     # push message to the line user
     try:
         # send members' goals and progress rate to the line user
-        message = f"今日の目標達成率ランキング\n\n"
+        message = f"現在の目標達成率ランキング\n\n"
         for i in range(number_of_members):
             message += f"{i+1}位：{users_goals_info[i]['goal']} {users_goals_info[i]['progress_rate']}%\n"
         line_bot_api.push_message(
