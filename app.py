@@ -476,14 +476,18 @@ def goal():
     # When POST
     if request.method == "POST":
         # get the user's goal input
-        goal = request.form.get("goal")
+        final_goal = request.form.get("final")
+        minimum_goal = request.form.get("goal")
 
         # When invalid input
-        if not goal:
+        if not minimum_goal or not final_goal:
             return render_template("apology.html", msg="正しく入力してください")
 
         # date created
         date_created = datetime.now()
+
+        # goal = final_goal + minimum_goal
+        goal = final_goal + "のために、 " + minimum_goal + "!"
 
         # Put goal info to database
         # put into goals table
@@ -500,7 +504,7 @@ def goal():
         try:
             with connect_to_database() as conn:
                 with conn.cursor() as cur:
-                    cur.execute("INSERT INTO goals_history (goal, user_id, progress_rate) VALUES (%s, %s, %s)", (goal, user_id, default_progress_rate))
+                    cur.execute("INSERT INTO goals_history (goal, user_id, progress_rate, date_created) VALUES (%s, %s, %s, %s)", (goal, user_id, default_progress_rate, date_created))
                 conn.commit()
         except:
             return render_template("apology.html", msg="失敗しました")

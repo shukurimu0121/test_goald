@@ -7,13 +7,18 @@
 {% block main %}
     <div class="container">
         <div class="username"><h1>{{ username }}さんのプロフィール</h1></div>
+        <div class="user_type">
+            <h2>ユーザータイプ</h2>
+            <h3>{{ user_type }}</h3>
+        </div>
         <div class="goals_history p-5">
             <table class="table table-warning table-sm p-5">
                 <thead>
-                    <履歴>
+                    <h2>履歴</h2>
                     <tr>
                         <th>目標</th>
                         <th>達成率</th>
+                        <th>宣言日</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -21,6 +26,7 @@
                         <tr>
                             <td>{{ goal.goal }}</td>
                             <td>{{ goal.progress_rate }}%</td>
+                            <td>{{ goal.date_created }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
