@@ -193,7 +193,7 @@ def register():
                 return render_template("apology.html", msg="失敗しました")
 
             # redirect log in page
-            return redirect("/login")
+            return redirect("/")
 
     else:
         return render_template("register.html")
@@ -476,7 +476,7 @@ def goal():
     # When POST
     if request.method == "POST":
         # get the user's goal input
-        final_goal = request.form.get("final")
+        final_goal = request.form.get("final_goal")
         minimum_goal = request.form.get("goal")
 
         # When invalid input
@@ -487,7 +487,7 @@ def goal():
         date_created = datetime.now()
 
         # goal = final_goal + minimum_goal
-        goal = final_goal + "のために、 " + minimum_goal + "!"
+        goal = final_goal + "ために、 " + minimum_goal + "!"
 
         # Put goal info to database
         # put into goals table
