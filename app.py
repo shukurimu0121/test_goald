@@ -705,7 +705,7 @@ def cheer():
             TextSendMessage(text=f"{username}さんからの応援が届きました！みなさん頑張りましょう！ {APP_URL}")
         )
 
-    return 200
+    return redirect(url_for("room", room_id=room_id))
 
 
 
