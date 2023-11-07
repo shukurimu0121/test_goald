@@ -25,7 +25,6 @@ import pytz
 
 # timezone
 JST = pytz.timezone('Asia/Tokyo')
-datetime.now(JST)
 
 # localhost 
 # DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
@@ -293,7 +292,7 @@ def make_room():
             return render_template("apology.html", msg="目標を設定してください")
         
         else:
-            today = datetime.now().date()
+            today = datetime.now(JST).date()
             return render_template("make_room.html", today=today)
     
 # enter room route
@@ -511,7 +510,7 @@ def goal():
             return render_template("apology.html", msg="正しく入力してください")
 
         # date created
-        date_created = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        date_created = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')
 
         # goal = final_goal + minimum_goal
         goal = final_goal + "ために、" + minimum_goal + "!"
@@ -552,7 +551,7 @@ def goal():
             print(e)
             return render_template("apology.html", msg="失敗しました")
 
-        today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        today = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')
         if len(goal) == 1:
             return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today)
         else:
@@ -706,6 +705,7 @@ def cheer():
             TextSendMessage(text=f"{username}さんからの応援が届きました！みなさん頑張りましょう！ {APP_URL}")
         )
 
+    return 200
 
 
 
@@ -948,10 +948,11 @@ def schedule_message():
 
 # register scheduled message
 schedule.every().day.at("20:00").do(schedule_message)
+schedule.every(5).minutes.do(schedule_message)
 
 # run app
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
     while True:
         schedule.run_pending()
         time.sleep(1)

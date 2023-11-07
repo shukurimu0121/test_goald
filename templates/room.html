@@ -23,19 +23,18 @@
                     <div class="mb-3">
                         <h2>全体の達成率</h2>
                         <h1 id="average">{{ average }}%</h1> 
-                        <div class="pot mx-auto">
+                        <div class="pot mx-auto mb-3">
                             <div class="water"></div>
                         </div>
                     </div>
-                    <div class="cheer_button">
+                    <div class="cheer_button mb-3">
                         <form action="/cheer" method="post">
-                            <button class="btn btn-primary btn-lg" type="submit">みんなを応援</button>
+                            <button class="btn btn-warning btn-lg" type="submit">みんなを応援</button>
                         </form>
                     </div>
                 </div>
                 <div class="col-md-8">
-                    <div class="mb-3">
-                        <h2>期限</h2>
+                    <div class="mb-5">
                             <p id="deadline" hidden>{{ deadline }}</p>
                             <h1 id="remaining-time"></h1>
                     </div>
