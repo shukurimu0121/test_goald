@@ -220,7 +220,7 @@ def make_room():
         date = request.form.get("date")
         time = request.form.get("time")
 
-        deadline = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M')
+        deadline = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M:%S')
 
         # When invalid input
         if not room_id or not room_password or not date or not time:
@@ -387,7 +387,7 @@ def enter_room():
 @login_required
 def room():
     user_id = session["user_id"]
-    room_id = request.args.get("room_id")
+    room_id = int(request.args.get("room_id"))
 
     #if the room does not exist, return apology
     try:
@@ -420,7 +420,7 @@ def room():
                     user_goals = cur.fetchall()
         except:
             return render_template("apology.html", msg="失敗しました")
-        user_goal_dicts = [{"goal": goal["goal"], "progress_rate": goal["progress_rate"], "user_id": goal["user_id"], "deadline": goal["deadline"]} for goal in user_goals]
+        user_goal_dicts = [{"goal": goal["goal"], "progress_rate": goal["progress_rate"], "user_id": goal["user_id"]} for goal in user_goals]
         goals.extend(user_goal_dicts)
     
     # get all members' username
@@ -490,7 +490,7 @@ def goal():
             return render_template("apology.html", msg="正しく入力してください")
 
         # date created
-        date_created = datetime.now().strftime('%Y-%m-%d')
+        date_created = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
         # goal = final_goal + minimum_goal
         goal = final_goal + "ために、 " + minimum_goal + "!"
