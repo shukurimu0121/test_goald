@@ -21,6 +21,11 @@ from linebot.exceptions import (
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
 )
+import pytz
+
+# timezone
+JST = pytz.timezone('Asia/Tokyo')
+datetime.now(JST)
 
 # localhost 
 # DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
@@ -198,7 +203,7 @@ def register():
     else:
         return render_template("register.html")
     
-# room route
+# make_room route
 @app.route("/make_room", methods=["GET", "POST"])
 @login_required
 def make_room():
@@ -279,7 +284,8 @@ def make_room():
             return render_template("apology.html", msg="目標を設定してください")
         
         else:
-            return render_template("make_room.html")
+            today = datetime.now().date()
+            return render_template("make_room.html", today=today)
     
 # enter room route
 @app.route("/enter_room", methods=["GET", "POST"])
@@ -484,7 +490,7 @@ def goal():
             return render_template("apology.html", msg="正しく入力してください")
 
         # date created
-        date_created = datetime.now()
+        date_created = datetime.now().strftime('%Y-%m-%d')
 
         # goal = final_goal + minimum_goal
         goal = final_goal + "ために、 " + minimum_goal + "!"
