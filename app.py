@@ -75,7 +75,8 @@ def index():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                 goal = cur.fetchone()
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
 
     # get username
@@ -84,7 +85,8 @@ def index():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                 username = cur.fetchone()["name"]
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
 
     if goal:
@@ -120,7 +122,8 @@ def login():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM users WHERE name = %s", (username,))
                     user = cur.fetchone()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
         
         # Check the username and password are correct
@@ -180,7 +183,8 @@ def register():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM users WHERE name = %s", (username,))
                     user = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
         
         if  len(user) != 0:
@@ -194,7 +198,8 @@ def register():
                     with conn.cursor() as cur:
                         cur.execute("INSERT INTO users (name, password_hash) VALUES (%s, %s)", (username, password_hash))
                     conn.commit()
-            except:
+            except Exception as e:
+                print(e)
                 return render_template("apology.html", msg="失敗しました")
 
             # redirect log in page
@@ -236,7 +241,8 @@ def make_room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
                     room = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
 
         if len(room) != 0:
@@ -251,7 +257,8 @@ def make_room():
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id, deadline) VALUES (%s, %s, %s, %s)", (room_id, room_password_hash, user_id, deadline))
                 conn.commit()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
         
         return redirect("/enter_room")
@@ -265,7 +272,8 @@ def make_room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
                     room = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
         
         if len(room) != 0:
@@ -277,7 +285,8 @@ def make_room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
 
         if len(goal) == 0:
@@ -315,7 +324,8 @@ def enter_room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
 
         if len(goal) == 0:
@@ -327,7 +337,8 @@ def enter_room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
                     room = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
 
         # Check the room id and password are correct
@@ -343,7 +354,8 @@ def enter_room():
                     with conn.cursor() as cur:
                         cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
                     conn.commit()
-            except:
+            except Exception as e:
+                print(e)
                 return render_template("apology.html", msg="失敗しました")
             
             return redirect(url_for("room", room_id=room_id))
@@ -360,7 +372,8 @@ def enter_room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
 
         if len(goal) == 0:
@@ -372,7 +385,8 @@ def enter_room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
                     room = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
 
         # if user already join a room, redirect to room page
@@ -395,7 +409,8 @@ def room():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
                 room = cur.fetchall()
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
 
     if len(room) == 0:
@@ -418,7 +433,8 @@ def room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (room_user_id,))
                     user_goals = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
         user_goal_dicts = [{"goal": goal["goal"], "progress_rate": goal["progress_rate"], "user_id": goal["user_id"]} for goal in user_goals]
         goals.extend(user_goal_dicts)
@@ -431,7 +447,8 @@ def room():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM users WHERE id = %s", (room_user_id,))
                     username = cur.fetchone()["name"]
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
         
         usernames.append(username)
@@ -448,9 +465,12 @@ def room():
     for goal in goals:
         progress_rate_sum += goal["progress_rate"]
     progress_rate_average = progress_rate_sum / number_of_members  
-    average = math.floor(progress_rate_average) 
+    average = math.floor(progress_rate_average)
 
-    return render_template("room.html", goals=goals, usernames=usernames, user_id=user_id, number_of_members=number_of_members, average=average)
+    # get room's deadline 
+    deadline = room[0]["deadline"]
+
+    return render_template("room.html", goals=goals, usernames=usernames, user_id=user_id, number_of_members=number_of_members, average=average, deadline=deadline)
 
 # leave room route
 @app.route("/leave_room", methods=["POST"])
@@ -466,7 +486,8 @@ def leave_room():
             with conn.cursor() as cur:
                 cur.execute("DELETE FROM rooms WHERE user_id = %s", (user_id,))
             conn.commit()
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
     
     return redirect("/enter_room")
@@ -502,7 +523,8 @@ def goal():
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO goals (goal, date_created, user_id) VALUES (%s, %s, %s)", (goal, date_created, user_id))
                 conn.commit()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
         
         # put into goals_history table
@@ -512,7 +534,8 @@ def goal():
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO goals_history (goal, user_id, progress_rate, date_created) VALUES (%s, %s, %s, %s)", (goal, user_id, default_progress_rate, date_created))
                 conn.commit()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
         
         return redirect("/goal")
@@ -525,7 +548,8 @@ def goal():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return render_template("apology.html", msg="失敗しました")
 
         today = datetime.now().strftime('%Y-%m-%d')
@@ -549,7 +573,8 @@ def delete_goal():
             with conn.cursor() as cur:
                 cur.execute("DELETE FROM goals WHERE user_id = %s", (user_id,))
             conn.commit()
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
     
     return redirect("/goal")
@@ -568,7 +593,8 @@ def update_progress_rate():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
                 room = cur.fetchall()
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
 
     # get progress rate
@@ -581,7 +607,8 @@ def update_progress_rate():
             with conn.cursor() as cur:
                 cur.execute("UPDATE goals SET progress_rate = %s WHERE user_id = %s", (progress_rate, user_id))
             conn.commit()
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
     
     # update goals_history table
@@ -591,7 +618,8 @@ def update_progress_rate():
                 with conn.cursor() as cur:
                     cur.execute("UPDATE goals_history SET progress_rate = %s WHERE user_id = %s", (progress_rate, user_id))
             conn.commit()
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
     
     # if user in a room, redirect to room page
@@ -623,7 +651,8 @@ def profile():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                 username = cur.fetchone()["name"]
-    except:
+    except Exception as e:
+        print(e)
         return render_template("apology.html", msg="失敗しました")
 
     # get user's goal history
@@ -632,7 +661,8 @@ def profile():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM goals_history WHERE user_id = %s", (user_id,))
                 goals_history = cur.fetchall()
-    except:
+    except Exception as e:
+        print(e)
         return render_template("profile.html")
 
     return render_template("profile.html", username=username, goals_history=goals_history)
