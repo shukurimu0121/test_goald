@@ -668,7 +668,44 @@ def profile():
     return render_template("profile.html", username=username, goals_history=goals_history)
 
 
-# cheer button route
+# cheer route
+@app.route("/cheer", methods=["POST"])
+def cheer():
+    # get user id
+    user_id = session["user_id"]
+
+    # get room id user in and username
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+                room_id = cur.fetchone()["room_id"]
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+                username = cur.fetchone()["name"]
+    except Exception as e:
+        print(e)
+        return render_template("apology.html", msg="失敗しました")
+    
+    # send line message to the room members
+    # get line user ids in the room
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT line_user_id FROM line_users WHERE room_id = %s", (room_id,))
+                line_user_ids = [row[0] for row in cur.fetchall()]
+    except Exception as e:
+        print(e)
+        return render_template("apology.html", msg="失敗しました")
+    
+    # send message to the line users
+    for line_user_id in line_user_ids:
+        line_bot_api.push_message(
+            line_user_id,
+            TextSendMessage(text=f"{username}さんからの応援が届きました！みなさん頑張りましょう！ {APP_URL}")
+        )
+
 
 
 

@@ -27,12 +27,17 @@
                             <div class="water"></div>
                         </div>
                     </div>
+                    <div class="cheer_button">
+                        <form action="/cheer" method="post">
+                            <button class="btn btn-primary btn-lg" type="submit">みんなを応援</button>
+                        </form>
+                    </div>
                 </div>
                 <div class="col-md-8">
                     <div class="mb-3">
                         <h2>期限</h2>
                             <p id="deadline" hidden>{{ deadline }}</p>
-                            <p id="remaining-time"></p>
+                            <h1 id="remaining-time"></h1>
                     </div>
                     <h2>目標</h2>
 
@@ -93,7 +98,7 @@
                 var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
                 var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-                element.textContent = "あと" + days + ":" + hours + ":" + minutes + ":" + seconds;
+                element.textContent = "あと" + days + "日" + hours + "時間" + minutes + "分" + seconds + "秒";
             }
         }
 
