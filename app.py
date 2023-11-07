@@ -511,10 +511,10 @@ def goal():
             return render_template("apology.html", msg="正しく入力してください")
 
         # date created
-        date_created = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        date_created = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # goal = final_goal + minimum_goal
-        goal = final_goal + "ために、 " + minimum_goal + "!"
+        goal = final_goal + "ために、" + minimum_goal + "!"
 
         # Put goal info to database
         # put into goals table
@@ -552,7 +552,7 @@ def goal():
             print(e)
             return render_template("apology.html", msg="失敗しました")
 
-        today = datetime.now().strftime('%Y-%m-%d')
+        today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         if len(goal) == 1:
             return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today)
         else:
