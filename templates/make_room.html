@@ -18,6 +18,11 @@
         <div class="mb-3">
             <input class="form-control mx-auto w-auto" id="room_password" name="room_password" placeholder="ルームパスワード" type="password">
         </div>
+        <div class="mb-3">
+            <label for="deadline" class="form-label">期限</label>
+            <input class="date" type="date" name="date" value="{{ today }}" min="{{ today }}" >
+            <input class="time" type="time" name="time">
+        </div>
         <button class="btn btn-primary" type="submit">作成</button>
     </form>
 {% endif %}

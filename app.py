@@ -23,10 +23,10 @@ from linebot.models import (
 )
 
 # localhost 
-DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
+# DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
 
 # deploy on heroku
-# DATABASE_URL = os.environ['DATABASE_URL']
+DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__)
 
@@ -212,12 +212,16 @@ def make_room():
         # get the user's input
         room_id = int(request.form.get("room_id"))
         room_password = request.form.get("room_password")
+        date = request.form.get("date")
+        time = request.form.get("time")
+
+        deadline = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M')
 
         # When invalid input
-        if not room_id or not room_password:
-            return render_template("apology.html", msg="ルームIDとパスワードを入力してください")
+        if not room_id or not room_password or not date or not time:
+            return render_template("apology.html", msg="正しく入力してください")
         
-        # when room id is mainus, return apology
+        # when room id is mainus or not integer, return apology
         if room_id < 0:
             return render_template("apology.html", msg="ルームIDは正の整数を入力してください")
         
@@ -240,7 +244,7 @@ def make_room():
         try:
             with connect_to_database() as conn:
                 with conn.cursor() as cur:
-                    cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
+                    cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id, deadline) VALUES (%s, %s, %s, %s)", (room_id, room_password_hash, user_id, deadline))
                 conn.commit()
         except:
             return render_template("apology.html", msg="失敗しました")
@@ -473,17 +477,10 @@ def goal():
     if request.method == "POST":
         # get the user's goal input
         goal = request.form.get("goal")
-        date = request.form.get("date")
-        time = request.form.get("time")
 
         # When invalid input
-        if not goal or not date or not time:
+        if not goal:
             return render_template("apology.html", msg="正しく入力してください")
-
-        datetime_data = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M')
-
-        # deadline to datetime
-        deadline = datetime_data
 
         # date created
         date_created = datetime.now()
@@ -493,7 +490,7 @@ def goal():
         try:
             with connect_to_database() as conn:
                 with conn.cursor() as cur:
-                    cur.execute("INSERT INTO goals (goal, date_created, deadline, user_id) VALUES (%s, %s, %s, %s)", (goal, date_created, deadline, user_id))
+                    cur.execute("INSERT INTO goals (goal, date_created, user_id) VALUES (%s, %s, %s)", (goal, date_created, user_id))
                 conn.commit()
         except:
             return render_template("apology.html", msg="失敗しました")
@@ -523,7 +520,7 @@ def goal():
 
         today = datetime.now().strftime('%Y-%m-%d')
         if len(goal) == 1:
-            return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], deadline=goal[0]["deadline"], today=today)
+            return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today)
         else:
             return render_template("goal.html", today=today)
         
@@ -601,34 +598,6 @@ def update_progress_rate():
 def notion():
     """notion"""
     return render_template("notion.html")
-
-# update deadline route
-@app.route("/update_deadline", methods=["POST"])
-@login_required
-def update_deadline():
-    # get user id
-    user_id = session["user_id"]
-
-    # get new deadline from users input
-    date = request.form.get("date")
-    time = request.form.get("time")
-
-    # When invalid input
-    if not date or not time:
-        return render_template("apology.html", msg="正しく入力してください")
-    
-    new_deadline = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M')
-
-    # update user's goal deadline
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor() as cur:
-                cur.execute("UPDATE goals SET deadline = %s WHERE user_id = %s", (new_deadline, user_id))
-            conn.commit()
-    except:
-        return render_template("apology.html", msg="失敗しました")
-    
-    return redirect("/goal")
 
 # profile route
 @app.route("/profile")

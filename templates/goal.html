@@ -17,15 +17,6 @@
                 <input class="btn btn-primary" type="submit" value="達成率を更新">
             </form>
         </div>
-        <div class="deadline my-5">
-            <h3><span id="remaining-time"></span></h3>
-            <form action="/update_deadline" method="POST" class="mt-3">
-                <label for="deadline" class="form-label"><h5>新しい期限</h5></label><br>
-                <input class="date" type="date" name="date" value="{{ today }}" min="{{ today }}" >
-                <input class="time mb-3" type="time" name="time"><br>
-                <input class="btn btn-primary" type="submit" value="期限を更新">
-            </form>
-        </div>
         <form action="/delete_goal" method="post">
             <input name="goal_id" type="hidden" value="{{ id }}">
             <button class="btn btn-danger btn-lg" type="submit">目標を変更</button><br>
@@ -33,12 +24,9 @@
     {% else %}
     <form action="/goal" method="post">
         <div class="mb-3">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="goal" name="goal" placeholder="目標を入力してください" type="text">
-        </div>
-        <div class="mb-3">
-            <label for="deadline" class="form-label">期限</label>
-            <input class="date" type="date" name="date" value="{{ today }}" min="{{ today }}" >
-            <input class="time" type="time" name="time">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="final_goal" name="final_goal" placeholder="最終目標" type="text">
+            <p>ために、</p>
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="goal" name="goal" placeholder="ミニマム目標" type="text">
         </div>
         <button class="btn btn-primary" type="submit">宣言</button>
     </form>

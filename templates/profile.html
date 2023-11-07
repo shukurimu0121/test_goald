@@ -5,24 +5,26 @@
 {% endblock %}
 
 {% block main %}
-    <div class="username"><h1>{{ username }}</h1></div>
-    <div class="goals_history p-5">
-        <h2>履歴</h2>
-        <table class="table table-warning table-sm p-5">
-            <thead>
-                <tr>
-                    <th>目標</th>
-                    <th>達成率</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for goal in goals_history %}
+    <div class="container">
+        <div class="username"><h1>{{ username }}さんのプロフィール</h1></div>
+        <div class="goals_history p-5">
+            <table class="table table-warning table-sm p-5">
+                <thead>
+                    <履歴>
                     <tr>
-                        <td>{{ goal.goal }}</td>
-                        <td>{{ goal.progress_rate }}%</td>
+                        <th>目標</th>
+                        <th>達成率</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for goal in goals_history %}
+                        <tr>
+                            <td>{{ goal.goal }}</td>
+                            <td>{{ goal.progress_rate }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 {% endblock %}
