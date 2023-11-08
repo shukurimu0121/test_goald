@@ -692,10 +692,9 @@ def profile():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                 username = cur.fetchone()["name"]
-                user_type = cur.fetchone()["type"]
     except Exception as e:
         print(e)
-        return render_template("apology.html", msg="失敗しました")
+        return render_template("apology.html", msg=str(e))
 
     # get user's goal history
     try:
@@ -705,9 +704,9 @@ def profile():
                 goals_history = cur.fetchall()
     except Exception as e:
         print(e)
-        return render_template("apology.html", msg="失敗しました")
+        return render_template("apology.html", msg=str(e))
 
-    return render_template("profile.html", username=username, user_type=user_type ,goals_history=goals_history)
+    return render_template("profile.html", username=username, goals_history=goals_history)
 
 
 # cheer route
@@ -1003,7 +1002,7 @@ schedule.every(5).minutes.do(schedule_message)
 
 # run app
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
     while True:
         schedule.run_pending()
         time.sleep(1)
