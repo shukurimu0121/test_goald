@@ -158,6 +158,7 @@ def register():
         username = request.form.get("username")
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
+        user_type = request.form.get("usertype")
 
         # Ensure username was submitted
         if not username:
@@ -174,6 +175,10 @@ def register():
         # password matches confirmation
         elif password != confirmation:
             return render_template("apology.html", msg="パスワードを正しく入力してください")
+        
+        # Ensure user type was submitted
+        elif not user_type:
+            return render_template("apology.html", msg="ユーザータイプを選択してください")
 
         # Check the username already exists
         # Query database for username
@@ -195,7 +200,7 @@ def register():
             try:
                 with connect_to_database() as conn:
                     with conn.cursor() as cur:
-                        cur.execute("INSERT INTO users (name, password_hash) VALUES (%s, %s)", (username, password_hash))
+                        cur.execute("INSERT INTO users (name, password_hash, type) VALUES (%s, %s, %s)", (username, password_hash, user_type))
                     conn.commit()
             except Exception as e:
                 print(e)
@@ -330,7 +335,7 @@ def enter_room():
         if len(goal) == 0:
             return render_template("apology.html", msg="目標を設定してください")
         
-        # Get room info from database)
+        # Get room info from database
         try:
             with connect_to_database() as conn:
                 with conn.cursor(cursor_factory=DictCursor) as cur:
@@ -339,6 +344,9 @@ def enter_room():
         except Exception as e:
             print(e)
             return render_template("apology.html", msg="失敗しました")
+        
+        # get the room's deadline
+        deadline = room[0]["deadline"]
 
         # Check the room id and password are correct
         if len(room) == 0 or not check_password_hash(room[0]["room_password_hash"], room_password):
@@ -351,7 +359,7 @@ def enter_room():
             try:
                 with connect_to_database() as conn:
                     with conn.cursor() as cur:
-                        cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id) VALUES (%s, %s, %s)", (room_id, room_password_hash, user_id))
+                        cur.execute("INSERT INTO rooms (room_id, room_password_hash, user_id, deadline) VALUES (%s, %s, %s, %s)", (room_id, room_password_hash, user_id, deadline))
                     conn.commit()
             except Exception as e:
                 print(e)
@@ -435,7 +443,19 @@ def room():
         except Exception as e:
             print(e)
             return render_template("apology.html", msg="失敗しました")
-        user_goal_dicts = [{"goal": goal["goal"], "progress_rate": goal["progress_rate"], "user_id": goal["user_id"]} for goal in user_goals]
+        
+        # get user's name
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM users WHERE id = %s", (room_user_id,))
+                    username = cur.fetchone()["name"]
+        except Exception as e:
+            print(e)
+            return render_template("apology.html", msg="失敗しました")
+        
+        # add username and goal info to user_goals
+        user_goal_dicts = [{"goal": goal["goal"], "progress_rate": goal["progress_rate"], "user_id": goal["user_id"], "username": username} for goal in user_goals]
         goals.extend(user_goal_dicts)
     
     # get all members' username
@@ -469,7 +489,29 @@ def room():
     # get room's deadline 
     deadline = room[0]["deadline"]
 
-    return render_template("room.html", goals=goals, usernames=usernames, user_id=user_id, number_of_members=number_of_members, average=average, deadline=deadline)
+    # each user type has different room page
+    # get user type
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT type FROM users WHERE id = %s", (user_id,))
+                user_type = cur.fetchone()["type"]
+    except Exception as e:
+        print(e)
+        return render_template("apology.html", msg="失敗しました")
+    
+    # if user is positive, return positive room page
+    if user_type == "positive":
+        return render_template("positive_room.html", goals=goals, user_id=user_id, number_of_members=number_of_members, average=average, deadline=deadline)
+    
+    # if user is sensitive, return sensitive room page
+    elif user_type == "sensitive":
+        return render_template("room.html", goals=goals, usernames=usernames, user_id=user_id, number_of_members=number_of_members, average=average, deadline=deadline)
+
+    # if user is negative, return negative room page
+    else:
+        return render_template("negative_room.html", goals=goals, user_id=user_id, number_of_members=number_of_members, average=average, deadline=deadline)
+
 
 # leave room route
 @app.route("/leave_room", methods=["POST"])
@@ -644,12 +686,13 @@ def profile():
     # get user id
     user_id = session["user_id"]
 
-    # get username  
+    # get username and user type
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                 username = cur.fetchone()["name"]
+                user_type = cur.fetchone()["type"]
     except Exception as e:
         print(e)
         return render_template("apology.html", msg="失敗しました")
@@ -662,9 +705,9 @@ def profile():
                 goals_history = cur.fetchall()
     except Exception as e:
         print(e)
-        return render_template("profile.html")
+        return render_template("apology.html", msg="失敗しました")
 
-    return render_template("profile.html", username=username, goals_history=goals_history)
+    return render_template("profile.html", username=username, user_type=user_type ,goals_history=goals_history)
 
 
 # cheer route

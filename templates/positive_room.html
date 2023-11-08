@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    部屋
+{% endblock %}
+
+{% block main %}
+    {% if number_of_members > 2 %}
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h2>参加者</h2>
+                    <div class="member mb-3">
+                        {% for username in usernames %}
+                            <h5>{{ username }}  </h5>
+                        {% endfor %}
+                    </div>
+                    <div class="leaveButton mb-5">
+                        <form action="/leave_room" method="post">
+                            <button class="btn btn-danger btn-lg" type="submit">退出</button>
+                        </form>
+                    </div>
+                    <div class="mb-3">
+                        <h2>全体の達成率</h2>
+                        <h1 id="average">{{ average }}%</h1> 
+                        <div class="pot mx-auto mb-3">
+                            <div class="water"></div>
+                        </div>
+                    </div>
+                    <div class="cheer_button mb-3">
+                        <form action="/cheer" method="post">
+                            <button class="btn btn-warning btn-lg" type="submit">みんなを応援</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="mb-5">
+                            <p id="deadline" hidden>{{ deadline }}</p>
+                            <h1 id="remaining-time"></h1>
+                    </div>
+                    <h2>目標</h2>
+
+                    {% for goal in goals %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h3 class="card-title">{{ goal.username }}さんの目標</h3>
+                                <h2 class="card-title">{{ goal.goal }}</h2>
+                                {% if goal.user_id == user_id %}
+                                    <form action="/update_progress_rate" method="POST">
+                                        <label for="progress">達成率:{{ goal.progress_rate }}%</label><br>
+                                        <input type="range" id="progress" name=progress min="0" max="100" step="1" value="{{goal.progress_rate}}">
+                                        <output for="progress" id="progressValue">{{goal.progress_rate}}%</output><br>
+                                        <input class="btn btn-primary" type="submit" value="更新">
+                                    </form>
+                                {% else %}
+                                    <p>達成率:{{ goal.progress_rate }}%</p>
+                                    <input type="range" min="0" max="100" step="1" value="{{goal.progress_rate}}" disabled><br>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="container">
+            <h1>参加者が3人以上で開始します</h1>
+        </div>
+        <div class="leaveButton mb-5">
+            <form action="/leave_room" method="post">
+                <button class="btn btn-danger btn-lg" type="submit">退出</button>
+            </form>
+        </div>
+    {% endif %}
+    <script>
+        // 達成率のスライダー
+        const progressSlider = document.getElementById('progress');
+        const progressValue = document.getElementById('progressValue');
+
+        progressSlider.addEventListener('input', () => {
+            progressValue.textContent = progressSlider.value + '%';
+        });
+
+        // 残り時間の表示
+        function updateRemainingTime() {
+            const element = document.getElementById('remaining-time');
+            const deadlineText = document.getElementById('deadline').textContent;
+            const deadline = new Date(deadlineText);
+
+            const now = new Date();
+            const remainingTime = deadline - now;
+
+            if (remainingTime <= 0) {
+                element.textContent = 'お疲れ様でした！';
+            } else {
+                var days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+                element.textContent = "あと" + days + "日" + hours + "時間" + minutes + "分" + seconds + "秒";
+            }
+        }
+
+        // 1秒ごとに更新
+        setInterval(updateRemainingTime, 1000);
+        updateRemainingTime();  // ページ読み込み時にも更新
+
+        // 全体の達成率の表示
+        const average = document.getElementById('average').textContent;
+        const water = document.querySelector('.water');
+        
+        //averageをintegerに変換
+        const averageInt = parseInt(average);
+        //水の高さを決める
+        const waterHeight = 100 - averageInt;
+        //水の高さを設定
+        const gradient = `linear-gradient(180deg, rgb(238, 220, 198) 0%, rgb(238, 220, 198) ${waterHeight}%, rgb(227, 180, 70) ${waterHeight}%, rgb(227, 180, 70) 100%)`;
+        water.style.background = gradient;
+
+    </script>
+{% endblock %}
