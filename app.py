@@ -229,7 +229,7 @@ def make_room():
         date = request.form.get("date")
         time = request.form.get("time")
 
-        deadline = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M:%S')
+        deadline = datetime.strptime(date + " " + time, '%Y-%m-%d %H:%M')
 
         # When invalid input
         if not room_id or not room_password or not date or not time:
@@ -756,8 +756,16 @@ def cheer():
 # linebot 
 #Token取得
 
+# ローカル環境
+# YOUR_CHANNEL_ACCESS_TOKEN = "Z14pLqOO864QqOaAEpqTkUwPRRGzmTYAHpVZz2W3CTuMv/CNWib8Qqpyj0q1ZckLH6uoOpmB5VEW1h8alKxVACy58y8IecCrsY5dciYaBD1v51p4189WlmnUauYwG8DWtsCxDnUDBvpxqKpc9FNAMwdB04t89/1O/w1cDnyilFU="
+# YOUR_CHANNEL_SECRET = "d47e7c03339338aa4d2c39d6c2cb870d"
+
+
+# 本番環境
 YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
 YOUR_CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
+
+# アプリのURL
 APP_URL = "https://pot-of-goald-f14a2468eebb.herokuapp.com/"
 
 line_bot_api = LineBotApi(YOUR_CHANNEL_ACCESS_TOKEN)

@@ -9,12 +9,6 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <h2>参加者</h2>
-                    <div class="member mb-3">
-                        {% for username in usernames %}
-                            <h5>{{ username }}  </h5>
-                        {% endfor %}
-                    </div>
                     <div class="leaveButton mb-5">
                         <form action="/leave_room" method="post">
                             <button class="btn btn-danger btn-lg" type="submit">退出</button>
@@ -43,7 +37,7 @@
                     {% for goal in goals %}
                         <div class="card mb-3">
                             <div class="card-body">
-                                <h3 class="card-title">{{ goal.username }}さんの目標</h3>
+                                <h3 class="card-title">{{ goal.username }}は</h3>
                                 <h2 class="card-title">{{ goal.goal }}</h2>
                                 {% if goal.user_id == user_id %}
                                     <form action="/update_progress_rate" method="POST">
