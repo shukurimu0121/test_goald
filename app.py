@@ -74,7 +74,6 @@ def index():
                 goal = cur.fetchone()
     except Exception as e:
         print(e)
-        return render_template("apology.html", msg="失敗しました")
 
     # get username
     try:
@@ -84,7 +83,6 @@ def index():
                 username = cur.fetchone()["name"]
     except Exception as e:
         print(e)
-        return render_template("apology.html", msg="失敗しました")
 
     # get goal deadline from rooms table
     try:
@@ -94,7 +92,6 @@ def index():
                 deadline = cur.fetchone()["deadline"]
     except Exception as e:
         print(e)
-        return render_template("apology.html", msg="失敗しました")
 
     if not goal:
         return render_template("index.html", username=username)
@@ -604,7 +601,6 @@ def goal():
                     goal = cur.fetchall()
         except Exception as e:
             print(e)
-            return render_template("apology.html", msg="失敗しました")
 
         today = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -616,7 +612,6 @@ def goal():
                     deadline = cur.fetchone()["deadline"]
         except Exception as e:
             print(e)
-            return render_template("apology.html", msg="失敗しました")
         
         if len(goal) == 1 and deadline:
             return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today, deadline=deadline)
