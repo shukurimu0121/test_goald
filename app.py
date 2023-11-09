@@ -88,8 +88,18 @@ def index():
         print(e)
         return render_template("apology.html", msg="失敗しました")
 
+    # get goal deadline from rooms table
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT deadline FROM rooms WHERE user_id = %s", (user_id,))
+                deadline = cur.fetchone()["deadline"]
+    except Exception as e:
+        print(e)
+        return render_template("apology.html", msg="失敗しました")
+
     if goal:
-        return render_template("index.html", goal=goal["goal"], username=username)
+        return render_template("index.html", goal=goal["goal"], username=username, deadline=deadline)
     
     else:
         return render_template("index.html", username=username)
@@ -749,7 +759,34 @@ def cheer():
 
     return redirect(url_for("room", room_id=room_id))
 
+# delete goal and room route
+@app.route("/delete_goal_and_room", methods=["GET"])
+@login_required
+def delete_goal_and_room():
+    # get user id
+    user_id = session["user_id"]
 
+    # delete goal from goals table
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM goals WHERE user_id = %s", (user_id,))
+            conn.commit()
+    except Exception as e:
+        print(e)
+        return render_template("apology.html", msg="失敗しました")
+    
+    # delete room from rooms table
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM rooms WHERE user_id = %s", (user_id,))
+            conn.commit()
+    except Exception as e:
+        print(e)
+        return render_template("apology.html", msg="失敗しました")
+    
+    return redirect("/")
 
 
 # linebot 

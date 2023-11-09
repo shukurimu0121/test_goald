@@ -9,6 +9,9 @@
         <div class="goal mb-3">
             <h1>{{ goal }}</h1>
         </div>
+        <div class="remaining-time mb-3">
+            <h3 id="remaining-time"></h3>
+        </div>
         <div class="progress_rate my-5">
             <form action="/update_progress_rate" method="POST">
                 <label for="progress"><h3>達成率:{{ progress_rate }}%</h3></label><br>
@@ -50,7 +53,7 @@
             var remainingTime = deadline - now;
 
             if (remainingTime <= 0) {
-                document.getElementById("remaining-time").textContent = "終了しました";
+                document.getElementById("remaining-time").textContent = "お疲れさまでした！";
             } else {
                 var days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
                 var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));

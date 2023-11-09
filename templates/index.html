@@ -6,11 +6,14 @@
 
 {% block main %}
     {% if goal %}
-        <div class="mb-3">
+        <div class="parent-node mb-3">
             <div class="username mb-5">
-                <h3>{{ username }}は</h3>
+                <h3>{{ username }}は、今週</h3>
             </div>
             <h1 class="goal mx-auto">{{ goal }}</h1>
+            <div class="remaining-time mb-3">
+                <h3 id="remaining-time"></h3>
+            </div>
         </div>
     {% else %}
         <div class="mb-3">
@@ -19,5 +22,37 @@
     {% endif %}
 
     <img src="/static/pan_767266.png" alt="pot" class="pot-img mx-auto my-5">
+    <script>
+        // Flaskから渡されたdeadline変数を取得
+        var deadline = new Date("{{ deadline }}");
+
+        function updateRemainingTime() {
+            var now = new Date();
+            var remainingTime = deadline - now;
+            if (remainingTime <= 0) {
+                document.getElementById("remaining-time").textContent = "お疲れさまでした！";
+                let confirm_result = confirm("お疲れさまでした！\n新たな目標とルームを設定しましょう！");
+                if (confirm_result) {
+                    location.href = "/delete_goal_and_room";
+                    alert("目標とルームを削除しました。");
+                }
+                else {
+                    alert("キャンセルしました。");
+                }
+
+            } else {
+                var days = Math.floor(remainingTime / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((remainingTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+                document.getElementById("remaining-time").textContent = "あと" + days + "日 " + hours + "時間 " + minutes + "分 " + seconds + "秒";
+            }
+        }
+
+        // 1秒ごとに更新
+        setInterval(updateRemainingTime, 1000);
+        updateRemainingTime();  // ページ読み込み時にも更新
+    </script>
 
 {% endblock %}

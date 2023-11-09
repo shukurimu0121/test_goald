@@ -37,7 +37,7 @@
                     {% for goal in goals %}
                         <div class="card mb-3">
                             <div class="card-body">
-                                <h3 class="card-title">{{ goal.username }}は</h3>
+                                <h3 class="card-title">{{ goal.username }}は、今週</h3>
                                 <h2 class="card-title">{{ goal.goal }}</h2>
                                 {% if goal.user_id == user_id %}
                                     <form action="/update_progress_rate" method="POST">
