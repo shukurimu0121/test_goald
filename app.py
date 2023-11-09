@@ -72,39 +72,23 @@ def index():
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                 goal = cur.fetchone()
-    except Exception as e:
-        print(e)
-
-    # get username
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                 username = cur.fetchone()["name"]
-    except Exception as e:
-        print(e)
-
-    # get goal deadline from rooms table
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT deadline FROM rooms WHERE user_id = %s", (user_id,))
                 deadline = cur.fetchone()["deadline"]
     except Exception as e:
         print(e)
-
-    if not goal:
+        return render_template("apology.html", msg="失敗しました")
+    
+    if len(goal) == 0:
         return render_template("index.html", username=username)
     
-    elif not deadline:
+    elif len(deadline) == 0:
         return render_template("index.html", goal=goal["goal"], username=username)
     
     else:
         return render_template("index.html", goal=goal["goal"], username=username, deadline=deadline)
     
-    
-
-
 # login route
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -599,27 +583,21 @@ def goal():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
-        except Exception as e:
-            print(e)
-
-        today = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')
-
-        # if user set deadline, display it
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT deadline FROM rooms WHERE user_id = %s", (user_id,))
                     deadline = cur.fetchone()["deadline"]
         except Exception as e:
             print(e)
+            return render_template("apology.html", msg="失敗しました")
+
+        today = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')
         
-        if len(goal) == 1 and deadline:
-            return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today, deadline=deadline)
+        if len(goal) ==0:
+            return render_template("goal.html", today=today)
         
-        elif len(goal) == 1 and not deadline:
+        elif len(deadline) == 0:
             return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today)
         else:
-            return render_template("goal.html", today=today)
+            return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today, deadline=deadline)
         
 # delete goal route
 @app.route("/delete_goal", methods=["POST"])
