@@ -74,7 +74,7 @@ def index():
                 goal = cur.fetchone()
                 cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                 username = cur.fetchone()["name"]
-                cur.execute("SELECT deadline FROM rooms WHERE user_id = %s", (user_id,))
+                cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
                 deadline = cur.fetchone()["deadline"]
     except Exception as e:
         print(e)
@@ -583,7 +583,7 @@ def goal():
                 with conn.cursor(cursor_factory=DictCursor) as cur:
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
-                    cur.execute("SELECT deadline FROM rooms WHERE user_id = %s", (user_id,))
+                    cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
                     deadline = cur.fetchone()["deadline"]
         except Exception as e:
             print(e)
