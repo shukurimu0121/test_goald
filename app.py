@@ -71,8 +71,7 @@ def index():
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
-                goal = cur.fetchone()
-                
+                goal = cur.fetchone()         
     except Exception as e:
         print(e)
         return render_template("apology.html", msg="失敗しました")
@@ -81,7 +80,7 @@ def index():
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT deadline FROM rooms WHERE user_id = %s", (user_id,))
+                cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
                 deadline = cur.fetchone()
     except Exception as e:
         print(e)
@@ -91,7 +90,7 @@ def index():
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))
+                cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                 username = cur.fetchone()
     except Exception as e:
         print(e)
