@@ -73,21 +73,21 @@ def index():
                 cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                 goal = cur.fetchone()
                 cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-                username = cur.fetchone()["name"]
+                username = cur.fetchone()
                 cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
-                deadline = cur.fetchone()["deadline"]
+                deadline = cur.fetchone()
     except Exception as e:
         print(e)
         return render_template("apology.html", msg="失敗しました")
     
     if len(goal) == 0:
-        return render_template("index.html", username=username)
+        return render_template("index.html", username=username["name"])
     
     elif len(deadline) == 0:
-        return render_template("index.html", goal=goal["goal"], username=username)
+        return render_template("index.html", goal=goal["goal"], username=username["name"])
     
     else:
-        return render_template("index.html", goal=goal["goal"], username=username, deadline=deadline)
+        return render_template("index.html", goal=goal["goal"], username=username, deadline=deadline["deadline"])
     
 # login route
 @app.route("/login", methods=["GET", "POST"])
@@ -584,7 +584,7 @@ def goal():
                     cur.execute("SELECT * FROM goals WHERE user_id = %s", (user_id,))
                     goal = cur.fetchall()
                     cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
-                    deadline = cur.fetchone()["deadline"]
+                    deadline = cur.fetchone()
         except Exception as e:
             print(e)
             return render_template("apology.html", msg="失敗しました")
@@ -597,7 +597,7 @@ def goal():
         elif len(deadline) == 0:
             return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today)
         else:
-            return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today, deadline=deadline)
+            return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today, deadline=deadline["deadline"])
         
 # delete goal route
 @app.route("/delete_goal", methods=["POST"])
