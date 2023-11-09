@@ -96,10 +96,10 @@ def index():
         print(e)
         return render_template("apology.html", msg="失敗しました")
     
-    if len(goal) == 0:
+    if not goal:
         return render_template("index.html", username=username["name"])
     
-    elif len(deadline) == 0:
+    elif not deadline:
         return render_template("index.html", goal=goal["goal"], username=username["name"])
     
     else:
@@ -607,10 +607,10 @@ def goal():
 
         today = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')
         
-        if len(goal) ==0:
+        if not goal:
             return render_template("goal.html", today=today)
         
-        elif len(deadline) == 0:
+        elif not deadline== 0:
             return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today)
         else:
             return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today, deadline=deadline["deadline"])
