@@ -76,7 +76,6 @@ def index():
                 goal = cur.fetchone()
     except Exception as e:
         print(e)
-        return render_template("apology.html", msg="失敗しました")
 
     # get username
     try:
@@ -86,7 +85,6 @@ def index():
                 username = cur.fetchone()["name"]
     except Exception as e:
         print(e)
-        return render_template("apology.html", msg="失敗しました")
 
     # get goal deadline from rooms table
     try:
@@ -96,7 +94,6 @@ def index():
                 deadline = cur.fetchone()["deadline"]
     except Exception as e:
         print(e)
-        return render_template("apology.html", msg="失敗しました")
 
     if goal:
         return render_template("index.html", goal=goal["goal"], username=username, deadline=deadline)
