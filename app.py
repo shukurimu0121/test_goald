@@ -103,7 +103,7 @@ def index():
         return render_template("index.html", goal=goal["goal"], username=username["name"])
     
     else:
-        return render_template("index.html", goal=goal["goal"], username=username, deadline=deadline["deadline"])
+        return render_template("index.html", goal=goal["goal"], username=username["name"], deadline=deadline["deadline"])
     
 # login route
 @app.route("/login", methods=["GET", "POST"])
