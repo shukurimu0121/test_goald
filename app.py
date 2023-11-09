@@ -66,8 +66,6 @@ def index():
     # show users goal
     user_id = session["user_id"]
 
-    # if users goal deadline is passed, notify it
-
     # get the user's goal from database
     try:
         with connect_to_database() as conn:
@@ -76,6 +74,7 @@ def index():
                 goal = cur.fetchone()
     except Exception as e:
         print(e)
+        return render_template("apology.html", msg="失敗しました")
 
     # get username
     try:
@@ -85,6 +84,7 @@ def index():
                 username = cur.fetchone()["name"]
     except Exception as e:
         print(e)
+        return render_template("apology.html", msg="失敗しました")
 
     # get goal deadline from rooms table
     try:
@@ -94,12 +94,18 @@ def index():
                 deadline = cur.fetchone()["deadline"]
     except Exception as e:
         print(e)
+        return render_template("apology.html", msg="失敗しました")
 
-    if goal:
-        return render_template("index.html", goal=goal["goal"], username=username, deadline=deadline)
+    if not goal:
+        return render_template("index.html", username=username)
+    
+    elif not deadline:
+        return render_template("index.html", goal=goal["goal"], username=username)
     
     else:
-        return render_template("index.html", username=username)
+        return render_template("index.html", goal=goal["goal"], username=username, deadline=deadline)
+    
+    
 
 
 # login route
@@ -601,7 +607,21 @@ def goal():
             return render_template("apology.html", msg="失敗しました")
 
         today = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')
-        if len(goal) == 1:
+
+        # if user set deadline, display it
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT deadline FROM rooms WHERE user_id = %s", (user_id,))
+                    deadline = cur.fetchone()["deadline"]
+        except Exception as e:
+            print(e)
+            return render_template("apology.html", msg="失敗しました")
+        
+        if len(goal) == 1 and deadline:
+            return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today, deadline=deadline)
+        
+        elif len(goal) == 1 and not deadline:
             return render_template("goal.html", goal=goal[0]["goal"], id=goal[0]["id"], progress_rate=goal[0]["progress_rate"], today=today)
         else:
             return render_template("goal.html", today=today)
