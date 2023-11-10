@@ -1048,12 +1048,13 @@ def schedule_message():
     for line_user in line_users:
         line_bot_api.push_message(
             line_user["line_user_id"],
-            TextSendMessage(text="進捗を報告しましょう！" + APP_URL)
+            TextSendMessage(text="あなたの目標が注目されています！あなたの頑張りを伝えてあげましょう！" + APP_URL)
         )
 
 # scheduled message to the line users
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(schedule_message, 'interval', minutes=2)
+sched.add_job(schedule_message, 'cron', hour=12, minute=0, timezone=JST)
+sched.add_job(schedule_message, 'cron', hour=20, minute=0, timezone=JST)
 sched.start()
 
 # run app
