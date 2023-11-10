@@ -8,7 +8,6 @@ import random
 import math
 import os
 import psycopg2
-import schedule
 from time import sleep
 import time
 from psycopg2.extras import DictCursor
@@ -22,7 +21,7 @@ from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
 )
 import pytz
-import threading
+from apscheduler.schedulers.blocking import BlockingScheduler  
 
 # timezone
 JST = pytz.timezone('Asia/Tokyo')
@@ -1051,15 +1050,11 @@ def schedule_message():
         push_progress_message(line_user["line_user_id"])
 
 # register scheduled message
-schedule.every().day.at("20:00").do(schedule_message)
-schedule.every(5).minutes.do(schedule_message)
+scheduler = BlockingScheduler()
+scheduler.add_job(schedule_message, 'interval', minutes=5)
+scheduler.start()
+
 
 # run app
-flask_thread = threading.Thread(target=app.run)
-flask_thread.start()
-
-# run schedule
-while True:
-    schedule.run_pending()
-    time.sleep(1)
-
+if __name__ == "__main__":
+    app.run()
