@@ -1049,11 +1049,6 @@ def schedule_message():
     for line_user in line_users:
         push_progress_message(line_user["line_user_id"])
 
-# register scheduled message
-scheduler = BlockingScheduler()
-scheduler.add_job(schedule_message, 'interval', minutes=5)
-scheduler.start()
-
 
 # run app
 if __name__ == "__main__":
