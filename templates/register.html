@@ -9,11 +9,15 @@
         <div class="mb-3">
             <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="username" name="username" placeholder="ユーザーネーム" type="text">
         </div>
-        <div class="mb-3">
+        <div class="mb-3 password-wrap">
             <input class="form-control mx-auto w-auto" id="password" name="password" placeholder="パスワード" type="password">
+            <img class="eye-slash-solid" src="/static/eye-slash-solid.svg" onclick="togglePasswordVisibility()" style="display: none;">
+            <img class="eye-solid" src="/static/eye-solid.svg" onclick="togglePasswordVisibility()">
         </div>
-        <div class="mb-3">
+        <div class="mb-3 password-wrap">
             <input class="form-control mx-auto w-auto" id="confirmation" name="confirmation" placeholder="パスワード確認" type="password">
+            <img class="eye-slash-solid-con" src="/static/eye-slash-solid.svg" onclick="toggleConfirmVisibility()" style="display: none;">
+            <img class="eye-solid-con" src="/static/eye-solid.svg" onclick="toggleConfirmVisibility()">
         </div>
         <div class="d-flex justify-content-center mb-3 usertype">
             <div class="form-check">
@@ -31,4 +35,35 @@
         </div>
         <button class="btn btn-primary" type="submit">登録</button>
     </form>
+    <script>
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const eyeSlash = document.querySelector('.eye-slash-solid');
+            const eye = document.querySelector('.eye-solid');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeSlash.style.display = 'block';
+                eye.style.display = 'none';
+            } else {
+                passwordInput.type = 'password';
+                eyeSlash.style.display = 'none';
+                eye.style.display = 'block';
+            }
+        }
+
+        function toggleConfirmVisibility() {
+            const passwordInput = document.getElementById('confirmation');
+            const eyeSlashcon = document.querySelector('.eye-slash-solid-con');
+            const eyecon = document.querySelector('.eye-solid-con');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeSlashcon.style.display = 'block';
+                eyecon.style.display = 'none';
+            } else {
+                passwordInput.type = 'password';
+                eyeSlashcon.style.display = 'none';
+                eyecon.style.display = 'block';
+            }
+        }
+    </script>
 {% endblock %}

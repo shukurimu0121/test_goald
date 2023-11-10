@@ -41,3 +41,15 @@ p.hidden {
     height: 100px;
 }
 
+.password-wrap {
+    position: relative;
+    
+}
+
+.password-wrap img {
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    display: block;
+    margin: auto;
+}
