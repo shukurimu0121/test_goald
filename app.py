@@ -22,6 +22,7 @@ from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
 )
 import pytz
+import threading
 
 # timezone
 JST = pytz.timezone('Asia/Tokyo')
@@ -767,7 +768,6 @@ def cheer():
 
 # delete goal and room route
 @app.route("/delete_goal_and_room", methods=["GET"])
-@login_required
 def delete_goal_and_room():
     # get user id
     user_id = session["user_id"]
@@ -791,8 +791,19 @@ def delete_goal_and_room():
     except Exception as e:
         print(e)
         return render_template("apology.html", msg="失敗しました")
+
+     # get the user's username from database
+    try:
+        with connect_to_database() as conn:
+            with conn.cursor(cursor_factory=DictCursor) as cur:
+                cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+                username = cur.fetchone()
+    except Exception as e:
+        print(e)
+        return render_template("apology.html", msg="失敗しました")
     
-    return redirect("/")
+    return render_template("index.html", username=username["name"])
+    
 
 
 # linebot 
@@ -1044,22 +1055,11 @@ schedule.every().day.at("20:00").do(schedule_message)
 schedule.every(5).minutes.do(schedule_message)
 
 # run app
-if __name__ == "__main__":
-    app.run(debug=True)
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+flask_thread = threading.Thread(target=app.run)
+flask_thread.start()
 
+# run schedule
+while True:
+    schedule.run_pending()
+    time.sleep(1)
 
-
-
-
-
-
-
-
-
-
-
-
- 
