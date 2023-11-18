@@ -28,10 +28,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 JST = pytz.timezone('Asia/Tokyo')
 
 # localhost 
-DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
+# DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
 
 # deploy on heroku
-# DATABASE_URL = os.environ['DATABASE_URL']
+DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__)
 
@@ -236,7 +236,7 @@ def make_room():
         
         # get the user's input
         room_id = int(request.form.get("room_id"))
-        room_password = request.form.get("room_password")
+        room_password = request.form.get("password")
         date = request.form.get("date")
         time = request.form.get("time")
 
@@ -323,7 +323,7 @@ def enter_room():
     if request.method == "POST":
         # get the user's input
         room_id = int(request.form.get("room_id"))
-        room_password = request.form.get("room_password")
+        room_password = request.form.get("password")
         
         # When invalid input
         if not room_id or not room_password:
@@ -761,7 +761,7 @@ def cheer():
     for line_user_id in line_user_ids:
         line_bot_api.push_message(
             line_user_id,
-            TextSendMessage(text=f"{username}さんからの応援が届きました！みなさん頑張りましょう！ {APP_URL}")
+            TextSendMessage(text=f"{username}さんがあなたの進捗を気にしています！進捗を報告しましょう！ {APP_URL}")
         )
 
     return redirect(url_for("room", room_id=room_id))
@@ -808,13 +808,13 @@ def delete_goal_and_room():
 #Token取得
 
 # ローカル環境
-YOUR_CHANNEL_ACCESS_TOKEN = "Z14pLqOO864QqOaAEpqTkUwPRRGzmTYAHpVZz2W3CTuMv/CNWib8Qqpyj0q1ZckLH6uoOpmB5VEW1h8alKxVACy58y8IecCrsY5dciYaBD1v51p4189WlmnUauYwG8DWtsCxDnUDBvpxqKpc9FNAMwdB04t89/1O/w1cDnyilFU="
-YOUR_CHANNEL_SECRET = "d47e7c03339338aa4d2c39d6c2cb870d"
+# YOUR_CHANNEL_ACCESS_TOKEN = "Z14pLqOO864QqOaAEpqTkUwPRRGzmTYAHpVZz2W3CTuMv/CNWib8Qqpyj0q1ZckLH6uoOpmB5VEW1h8alKxVACy58y8IecCrsY5dciYaBD1v51p4189WlmnUauYwG8DWtsCxDnUDBvpxqKpc9FNAMwdB04t89/1O/w1cDnyilFU="
+# YOUR_CHANNEL_SECRET = "d47e7c03339338aa4d2c39d6c2cb870d"
 
 
 # 本番環境
-# YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
-# YOUR_CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
+YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
+YOUR_CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
 
 # アプリのURL
 APP_URL = "https://pot-of-goald-f14a2468eebb.herokuapp.com/"
@@ -1046,10 +1046,7 @@ def schedule_message():
     
     # push message to the line users
     for line_user in line_users:
-        line_bot_api.push_message(
-            line_user["line_user_id"],
-            TextSendMessage(text="あなたの目標が注目されています！あなたの頑張りを伝えてあげましょう！" + APP_URL)
-        )
+        push_progress_message(line_user["line_user_id"])
 
 # scheduled message to the line users
 sched = BackgroundScheduler(daemon=True)
