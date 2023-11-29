@@ -822,6 +822,9 @@ def callback():
 # Message handler
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    # get line user id
+    line_user_id = event.source.user_id
+
     # line menu message
     # 部屋を登録
     if event.message.text == "部屋を登録":
@@ -936,7 +939,7 @@ def handle_message(event):
             except Exception as e:
                 line_bot_api.reply_message(
                     event.reply_token,
-                    TextSendMessage(text=f"エラー: {str(e)}")
+                    TextSendMessage(text="エラーが発生しました")
                 )
             
             line_bot_api.reply_message(
@@ -996,7 +999,7 @@ def push_progress_message(line_user_id):
         # send error to the line user
         line_bot_api.push_message(
             line_user_id,
-            TextSendMessage(text=f"エラー: {str(e)}")
+            TextSendMessage(text=f"エラーが発生しました")
         )
     
     # get goals and progress rate in the room, and sort by progress rate
@@ -1009,7 +1012,7 @@ def push_progress_message(line_user_id):
         # send error to the line user
         line_bot_api.push_message(
             line_user_id,
-            TextSendMessage(text=f"エラー: {str(e)}")
+            TextSendMessage(text=f"エラーが発生しました")
         )
 
     # get goals and progress rate in the room, and sort by progress rate
@@ -1022,7 +1025,7 @@ def push_progress_message(line_user_id):
         # send error to the line user
         line_bot_api.push_message(
             line_user_id,
-            TextSendMessage(text=f"エラー: {str(e)}")
+            TextSendMessage(text=f"エラーが発生しました")
         )
 
     # count the number of members
@@ -1043,7 +1046,7 @@ def push_progress_message(line_user_id):
         # send error to the line user
         line_bot_api.push_message(
             line_user_id,
-            TextSendMessage(text=f"エラー: {str(e)}")
+            TextSendMessage(text=f"エラーが発生しました")
         )
 
 # scheduled message to the line users
