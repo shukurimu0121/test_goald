@@ -44,22 +44,10 @@
             }
         }
 
-        function inform_deadline(){
-            var remainingTime = document.getElementById("remaining-time").textContent;
-            if (remainingTime == "お疲れさまでした！"){
-                let confirm_result = confirm("お疲れさまでした！\n新たな目標とルームを設定しましょう！");
-                if (confirm_result) {
-                    location.href = "/delete_goal_and_room";
-                }
-            }
-        }
-
         // 1秒ごとに更新
         setInterval(updateRemainingTime, 1000);
         updateRemainingTime();  // ページ読み込み時にも更新
 
-        //10秒ごとに確認
-        setInterval(inform_deadline, 10000);
     </script>
 
 {% endblock %}

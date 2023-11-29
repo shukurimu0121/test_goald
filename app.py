@@ -81,7 +81,7 @@ def index():
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT * FROM rooms WHERE user_id = %s", (user_id,))
+                cur.execute("SELECT deadline FROM rooms WHERE user_id = %s", (user_id,))
                 deadline = cur.fetchone()
     except Exception as e:
         print(e)
@@ -669,12 +669,11 @@ def update_progress_rate():
         print(e)
         return render_template("apology.html", msg="失敗しました")
     
-    # update goals_history table
+    # update goals_history table, but only date_created is newest one
     try:
         with connect_to_database() as conn:
-            with connect_to_database() as conn:
-                with conn.cursor() as cur:
-                    cur.execute("UPDATE goals_history SET progress_rate = %s WHERE user_id = %s", (progress_rate, user_id))
+            with conn.cursor() as cur:
+                cur.execute("UPDATE goals_history SET progress_rate = %s WHERE user_id = %s AND date_created = (SELECT MAX(date_created) FROM goals_history WHERE user_id = %s)", (progress_rate, user_id, user_id))
             conn.commit()
     except Exception as e:
         print(e)
@@ -741,7 +740,6 @@ def cheer():
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
                 cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-                username = cur.fetchone()["name"]
     except Exception as e:
         print(e)
         return render_template("apology.html", msg="失敗しました")
@@ -757,52 +755,33 @@ def cheer():
         print(e)
         return render_template("apology.html", msg="失敗しました")
     
+        
     # send message to the line users
     for line_user_id in line_user_ids:
         line_bot_api.push_message(
             line_user_id,
-            TextSendMessage(text=f"{username}さんがあなたの進捗を気にしています！進捗を報告しましょう！ {APP_URL}")
+            TextSendMessage(text=f"あなたがちゃんとやっているか、気にしている人がいます！進捗を報告してあげましょう！ {APP_URL}")
         )
 
     return redirect(url_for("room", room_id=room_id))
 
-# delete goal and room route
-@app.route("/delete_goal_and_room", methods=["GET"])
+# delete goal and room function
 def delete_goal_and_room():
-    # get user id
-    user_id = session["user_id"]
+    # get date
+    today = datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')
 
-    # delete goal from goals table
+    # delete room deadline which is earlier than today and delete the room members goal 
     try:
         with connect_to_database() as conn:
             with conn.cursor() as cur:
-                cur.execute("DELETE FROM goals WHERE user_id = %s", (user_id,))
+                cur.execute("DELETE FROM rooms WHERE deadline < %s", (today,))
+                cur.execute("DELETE FROM goals WHERE id IN (SELECT id FROM goals WHERE user_id IN (SELECT user_id FROM rooms WHERE deadline < %s))", (today,))
             conn.commit()
     except Exception as e:
         print(e)
         return render_template("apology.html", msg="失敗しました")
     
-    # delete room from rooms table
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor() as cur:
-                cur.execute("DELETE FROM rooms WHERE user_id = %s", (user_id,))
-            conn.commit()
-    except Exception as e:
-        print(e)
-        return render_template("apology.html", msg="失敗しました")
-
-     # get the user's username from database
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-                username = cur.fetchone()
-    except Exception as e:
-        print(e)
-        return render_template("apology.html", msg="失敗しました")
     
-    return render_template("index.html", username=username["name"])
     
 # linebot 
 #Token取得
@@ -846,18 +825,70 @@ def handle_message(event):
     # line menu message
     # 部屋を登録
     if event.message.text == "部屋を登録":
-        # 部屋番号を入力してくださいと返信
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="部屋番号を入力してください")
-        )
+        # 既に部屋に登録されているか確認
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                    line_user = cur.fetchall()
+        except Exception as e:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="エラーが発生しました")
+            )
+
+        # 既に部屋に登録されている場合、部屋を解除してくださいと返信
+        if len(line_user) != 0:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="部屋を解除してください")
+            )
+
+        # 部屋に登録されていない場合、部屋番号を入力してくださいと返信
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="部屋番号を数字のみ入力してください")
+            )
 
     if event.message.text == "登録を解除":
-        # 新しい部屋番号を入力してくださいと返信
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="新しい部屋番号を入力してください")
-        )
+        # 既に部屋に登録されているか確認
+        try:
+            with connect_to_database() as conn:
+                with conn.cursor(cursor_factory=DictCursor) as cur:
+                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                    line_user = cur.fetchall()
+        except Exception as e:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="エラーが発生しました")
+            )
+
+        # 既に部屋に登録されている場合、部屋を解除
+        if len(line_user) != 0:
+            try:
+                with connect_to_database() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("DELETE FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                    conn.commit()
+            except Exception as e:
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="エラーが発生しました")
+                )
+            
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="部屋を解除しました")
+            )
+        
+        # 部屋に登録されていない場合、部屋を登録してくださいと返信
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="部屋を登録してください")
+            )
+
     
     # 正の整数が入力されたとき
     if event.message.text.isdigit():
@@ -873,7 +904,7 @@ def handle_message(event):
         except Exception as e:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text=f"エラー: {str(e)}")
+                TextSendMessage(text="エラーが発生しました")
             )
 
         # 無効な部屋番号の場合
@@ -892,25 +923,7 @@ def handle_message(event):
         except Exception as e:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text=f"エラー: {str(e)}")
-            )
-        
-        # 既に部屋に登録されている場合、room_idを更新
-        if len(line_user) != 0:
-            try:
-                with connect_to_database() as conn:
-                    with conn.cursor() as cur:
-                        cur.execute("UPDATE line_users SET room_id = %s WHERE line_user_id = %s", (room_id, line_user_id))
-                    conn.commit()
-            except Exception as e:
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=f"エラー: {str(e)}")
-                )
-            
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="部屋番号を更新しました")
+                TextSendMessage(text="エラーが発生しました")
             )
         
         # 部屋に登録されていない場合、部屋を登録
@@ -1043,15 +1056,38 @@ def schedule_message():
                 line_users = cur.fetchall()
     except Exception as e:
         return str(e)
+
+
+    # set random encouragement message
+    ENCOUAGEMENT_MESSAGES = ["ちゃんと目標達成に向かって頑張っていますか？", 
+                             "目標達成に向けて真剣に取り組んでいますか？", 
+                             "着実に目標達成に向けて進んでいますか？", 
+                             "自分で宣言したことを守れていますか？", 
+                             "コツコツと目標達成のために努力できていますか？", 
+                             "目標達成に集中できていますか？", 
+                             "自分で宣言した目標を意識できていますか？",
+                             "努力を継続できていますか？",
+                             "最終目標を意識して、努力できていますか？",
+                             "誘惑に負けずに、努力できていますか？",]
     
     # push message to the line users
     for line_user in line_users:
-        push_progress_message(line_user["line_user_id"])
+        # set random encouragement message
+        encouragement_message = random.choice(ENCOUAGEMENT_MESSAGES)
+
+        # push message to the line user
+        try:
+            line_bot_api.push_message(
+                line_user["line_user_id"],
+                TextSendMessage(text=encouragement_message + f" {APP_URL}")
+            )
+        except Exception as e:
+            return str(e)
 
 # scheduled message to the line users
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(schedule_message, 'cron', hour=12, minute=0, timezone=JST)
 sched.add_job(schedule_message, 'cron', hour=20, minute=0, timezone=JST)
+sched.add_job(delete_goal_and_room, 'interval', minutes=1, timezone=JST)
 sched.start()
 
 # run app
