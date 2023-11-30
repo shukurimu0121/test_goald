@@ -774,14 +774,13 @@ def delete_goal_and_room():
     try:
         with connect_to_database() as conn:
             with conn.cursor() as cur:
-                cur.execute("DELETE FROM rooms WHERE deadline < %s", (today,))
                 cur.execute("DELETE FROM goals WHERE id IN (SELECT id FROM goals WHERE user_id IN (SELECT user_id FROM rooms WHERE deadline < %s))", (today,))
+                cur.execute("DELETE FROM rooms WHERE deadline < %s", (today,))
             conn.commit()
     except Exception as e:
         print(e)
         return render_template("apology.html", msg="失敗しました")
-    
-    
+
     
 # linebot 
 #Token取得
@@ -1048,7 +1047,7 @@ def push_progress_message(line_user_id):
             line_user_id,
             TextSendMessage(text=f"エラーが発生しました")
         )
-
+     
 # scheduled message to the line users
 def schedule_message():
     # get all line users
