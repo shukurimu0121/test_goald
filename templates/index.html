@@ -23,8 +23,45 @@
             <h1 class="goal mx-auto">{{ username }}さん、目標を宣言しましょう！</h1>
         </div>
     {% endif %}
-
     <img src="/static/pan_767266.png" alt="pot" class="pot-img mx-auto my-5">
+    <div id="goalCarousel" class="carousel slide" data-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <div class="d-block w-100">
+                    <h5>目標は具体的、数値を入れた目標にしよう</h5>
+                    <p>悪い具体例: 「英語の勉強を頑張る」</p>
+                    <p>良い具体例: 「○○という参考書を50ページすすめる」</p>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="d-block w-100">
+                    <h5>目標は頑張ったら達成できるくらいの難易度にしよう</h5>
+                        <p>明らかに実現不可能、簡単すぎる目標は良くない</p>
+                        <p>自分の能力、使える時間から目標を考えよう</p>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="d-block w-100">
+                    <h5>目標には明確な期限をつけよう</h5>
+                    <p>悪い具体例: 「TOEICで900点とる」</p>
+                    <p>良い具体例: 「2024年12月31日までにTOEICで900点をとる」</p>
+                </div>
+            </div>
+        </div>
+        <a class="carousel-control-prev" href="#goalCarousel" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">前へ</span>
+        </a>
+        <a class="carousel-control-next" href="#goalCarousel" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">次へ</span>
+        </a>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
     <script>
         // Flaskから渡されたdeadline変数を取得
         var deadline = new Date("{{ deadline }}");
