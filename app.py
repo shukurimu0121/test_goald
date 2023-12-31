@@ -927,9 +927,10 @@ def handle_message(event):
                 event.reply_token,
                 TextSendMessage(text="エラーが発生しました")
             )
+
         
         # 部屋に登録されていない場合、部屋を登録
-        else:
+        if len(line_user) == 0:
             try:
                 with connect_to_database() as conn:
                     with conn.cursor() as cur:
@@ -945,7 +946,12 @@ def handle_message(event):
                 event.reply_token,
                 TextSendMessage(text="部屋番号を登録しました")
             )
-    
+        else:
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="部屋を解除してください")
+            )
+            
     # ランキング
     if event.message.text == "ランキング":
         # get line user id
@@ -988,11 +994,11 @@ def handle_message(event):
 
 # Push message to the line users
 def push_progress_message(line_user_id):
-    # where user in a room
+    # where user in a room latest one
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+                cur.execute("SELECT * FROM line_users WHERE line_user_id = %s LIMIT 1", (line_user_id,))
                 line_user = cur.fetchall()
     except Exception as e:
         # send error to the line user
