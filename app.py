@@ -27,11 +27,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # timezone
 JST = pytz.timezone('Asia/Tokyo')
 
-# localhost 
-DATABASE_URL = "postgres://hpobhxuditpwle:f50f465838805b73f6eb6b9906d0d627cfba1178dd4989a5032acbd3cc8d08ef@ec2-52-205-55-36.compute-1.amazonaws.com:5432/ddngmugcbbk0mf"
 
 # deploy on heroku
-# DATABASE_URL = os.environ['DATABASE_URL']
+DATABASE_URL = os.environ['DATABASE_URL']
 
 app = Flask(__name__)
 
@@ -785,14 +783,11 @@ def delete_goal_and_room():
 # linebot 
 #Token取得
 
-# ローカル環境
-YOUR_CHANNEL_ACCESS_TOKEN = "Z14pLqOO864QqOaAEpqTkUwPRRGzmTYAHpVZz2W3CTuMv/CNWib8Qqpyj0q1ZckLH6uoOpmB5VEW1h8alKxVACy58y8IecCrsY5dciYaBD1v51p4189WlmnUauYwG8DWtsCxDnUDBvpxqKpc9FNAMwdB04t89/1O/w1cDnyilFU="
-YOUR_CHANNEL_SECRET = "d47e7c03339338aa4d2c39d6c2cb870d"
 
 
 # 本番環境
-# YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
-# YOUR_CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
+YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
+YOUR_CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
 
 # アプリのURL
 APP_URL = "https://pot-of-goald-f14a2468eebb.herokuapp.com/"
@@ -951,7 +946,7 @@ def handle_message(event):
                 event.reply_token,
                 TextSendMessage(text="部屋を解除してください")
             )
-            
+
     # ランキング
     if event.message.text == "ランキング":
         # get line user id
@@ -998,7 +993,7 @@ def push_progress_message(line_user_id):
     try:
         with connect_to_database() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT * FROM line_users WHERE line_user_id = %s LIMIT 1", (line_user_id,))
+                cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
                 line_user = cur.fetchall()
     except Exception as e:
         # send error to the line user
