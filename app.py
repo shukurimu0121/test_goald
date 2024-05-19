@@ -31,6 +31,17 @@ JST = pytz.timezone('Asia/Tokyo')
 # deploy on heroku
 DATABASE_URL = os.environ['DATABASE_URL']
 
+
+# local deploy
+
+# login info
+# your_username = "postgres" # デフォルト値のままだと思います
+# your_port = "5433" # 私は5433ですが、みなさんは5432（デフォルト値）かもしれません
+# your_database_name = "postgres" # デフォルト値のままだと思います
+# your_host = "localhost" # デフォルト値のままだと思います
+# your_password = "ha1ya2to1" # あなたが設定したパスワードに変更してください
+# DATABASE_URL = f"postgresql://{your_username}:{your_password}@{your_host}:{your_port}/{your_database_name}?sslmode=disable"
+
 app = Flask(__name__)
 
 # connect to database
@@ -780,319 +791,316 @@ def delete_goal_and_room():
         return render_template("apology.html", msg="失敗しました")
 
     
-# linebot 
-#Token取得
+# # linebot 
+# #Token取得
+# # 本番環境
+# YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
+# YOUR_CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
 
+# # アプリのURL
+# APP_URL = "https://pot-of-goald-f14a2468eebb.herokuapp.com/"
 
+# line_bot_api = LineBotApi(YOUR_CHANNEL_ACCESS_TOKEN)
+# handler = WebhookHandler(YOUR_CHANNEL_SECRET)
 
-# 本番環境
-YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]
-YOUR_CHANNEL_SECRET = os.environ["CHANNEL_SECRET"]
+# # Webhook
+# @app.route("/callback", methods=['POST'])
+# def callback():
+#     # get X-Line-Signature header value
+#     signature = request.headers['X-Line-Signature']
 
-# アプリのURL
-APP_URL = "https://pot-of-goald-f14a2468eebb.herokuapp.com/"
+#     # get request body as text
+#     body = request.get_data(as_text=True)
+#     app.logger.info("Request body: " + body)
 
-line_bot_api = LineBotApi(YOUR_CHANNEL_ACCESS_TOKEN)
-handler = WebhookHandler(YOUR_CHANNEL_SECRET)
+#     # handle webhook body
+#     try:
+#         handler.handle(body, signature)
+#     except InvalidSignatureError:
+#         abort(400)
 
-# Webhook
-@app.route("/callback", methods=['POST'])
-def callback():
-    # get X-Line-Signature header value
-    signature = request.headers['X-Line-Signature']
+#     return 'OK'
 
-    # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+# # Message handler
+# @handler.add(MessageEvent, message=TextMessage)
+# def handle_message(event):
+#     # get line user id
+#     line_user_id = event.source.user_id
 
-    # handle webhook body
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
+#     # line menu message
+#     # 部屋を登録
+#     if event.message.text == "部屋を登録":
+#         # 既に部屋に登録されているか確認
+#         try:
+#             with connect_to_database() as conn:
+#                 with conn.cursor(cursor_factory=DictCursor) as cur:
+#                     cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+#                     line_user = cur.fetchall()
+#         except Exception as e:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="エラーが発生しました")
+#             )
 
-    return 'OK'
+#         # 既に部屋に登録されている場合、部屋を解除してくださいと返信
+#         if len(line_user) != 0:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="部屋を解除してください")
+#             )
 
-# Message handler
-@handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
-    # get line user id
-    line_user_id = event.source.user_id
+#         # 部屋に登録されていない場合、部屋番号を入力してくださいと返信
+#         else:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="部屋番号を数字のみ入力してください")
+#             )
 
-    # line menu message
-    # 部屋を登録
-    if event.message.text == "部屋を登録":
-        # 既に部屋に登録されているか確認
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
-                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
-                    line_user = cur.fetchall()
-        except Exception as e:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="エラーが発生しました")
-            )
+#     if event.message.text == "登録を解除":
+#         # 既に部屋に登録されているか確認
+#         try:
+#             with connect_to_database() as conn:
+#                 with conn.cursor(cursor_factory=DictCursor) as cur:
+#                     cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+#                     line_user = cur.fetchall()
+#         except Exception as e:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="エラーが発生しました")
+#             )
 
-        # 既に部屋に登録されている場合、部屋を解除してくださいと返信
-        if len(line_user) != 0:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="部屋を解除してください")
-            )
-
-        # 部屋に登録されていない場合、部屋番号を入力してくださいと返信
-        else:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="部屋番号を数字のみ入力してください")
-            )
-
-    if event.message.text == "登録を解除":
-        # 既に部屋に登録されているか確認
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
-                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
-                    line_user = cur.fetchall()
-        except Exception as e:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="エラーが発生しました")
-            )
-
-        # 既に部屋に登録されている場合、部屋を解除
-        if len(line_user) != 0:
-            try:
-                with connect_to_database() as conn:
-                    with conn.cursor() as cur:
-                        cur.execute("DELETE FROM line_users WHERE line_user_id = %s", (line_user_id,))
-                    conn.commit()
-            except Exception as e:
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text="エラーが発生しました")
-                )
+#         # 既に部屋に登録されている場合、部屋を解除
+#         if len(line_user) != 0:
+#             try:
+#                 with connect_to_database() as conn:
+#                     with conn.cursor() as cur:
+#                         cur.execute("DELETE FROM line_users WHERE line_user_id = %s", (line_user_id,))
+#                     conn.commit()
+#             except Exception as e:
+#                 line_bot_api.reply_message(
+#                     event.reply_token,
+#                     TextSendMessage(text="エラーが発生しました")
+#                 )
             
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="部屋を解除しました")
-            )
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="部屋を解除しました")
+#             )
         
-        # 部屋に登録されていない場合、部屋を登録してくださいと返信
-        else:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="部屋を登録してください")
-            )
+#         # 部屋に登録されていない場合、部屋を登録してくださいと返信
+#         else:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="部屋を登録してください")
+#             )
 
     
-    # 正の整数が入力されたとき
-    if event.message.text.isdigit():
-        line_user_id = event.source.user_id
-        room_id = int(event.message.text)
+#     # 正の整数が入力されたとき
+#     if event.message.text.isdigit():
+#         line_user_id = event.source.user_id
+#         room_id = int(event.message.text)
 
-        # 有効な部屋番号か確認
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
-                    cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
-                    room = cur.fetchall()
-        except Exception as e:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="エラーが発生しました")
-            )
+#         # 有効な部屋番号か確認
+#         try:
+#             with connect_to_database() as conn:
+#                 with conn.cursor(cursor_factory=DictCursor) as cur:
+#                     cur.execute("SELECT * FROM rooms WHERE room_id = %s", (room_id,))
+#                     room = cur.fetchall()
+#         except Exception as e:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="エラーが発生しました")
+#             )
 
-        # 無効な部屋番号の場合
-        if len(room) == 0:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="無効な部屋番号です")
-            )
+#         # 無効な部屋番号の場合
+#         if len(room) == 0:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="無効な部屋番号です")
+#             )
         
-        # 既に部屋に登録されているか確認
-        try:
-            with connect_to_database() as conn:
-                with conn.cursor(cursor_factory=DictCursor) as cur:
-                    cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
-                    line_user = cur.fetchall()
-        except Exception as e:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="エラーが発生しました")
-            )
+#         # 既に部屋に登録されているか確認
+#         try:
+#             with connect_to_database() as conn:
+#                 with conn.cursor(cursor_factory=DictCursor) as cur:
+#                     cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+#                     line_user = cur.fetchall()
+#         except Exception as e:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="エラーが発生しました")
+#             )
 
         
-        # 部屋に登録されていない場合、部屋を登録
-        if len(line_user) == 0:
-            try:
-                with connect_to_database() as conn:
-                    with conn.cursor() as cur:
-                        cur.execute("INSERT INTO line_users (line_user_id, room_id) VALUES (%s, %s)", (line_user_id, room_id))
-                    conn.commit()
-            except Exception as e:
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text="エラーが発生しました")
-                )
+#         # 部屋に登録されていない場合、部屋を登録
+#         if len(line_user) == 0:
+#             try:
+#                 with connect_to_database() as conn:
+#                     with conn.cursor() as cur:
+#                         cur.execute("INSERT INTO line_users (line_user_id, room_id) VALUES (%s, %s)", (line_user_id, room_id))
+#                     conn.commit()
+#             except Exception as e:
+#                 line_bot_api.reply_message(
+#                     event.reply_token,
+#                     TextSendMessage(text="エラーが発生しました")
+#                 )
             
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="部屋番号を登録しました")
-            )
-        else:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="部屋を解除してください")
-            )
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="部屋番号を登録しました")
+#             )
+#         else:
+#             line_bot_api.reply_message(
+#                 event.reply_token,
+#                 TextSendMessage(text="部屋を解除してください")
+#             )
 
-    # ランキング
-    if event.message.text == "ランキング":
-        # get line user id
-        line_user_id = event.source.user_id
+#     # ランキング
+#     if event.message.text == "ランキング":
+#         # get line user id
+#         line_user_id = event.source.user_id
 
-        # push message to the line user
-        push_progress_message(line_user_id)
+#         # push message to the line user
+#         push_progress_message(line_user_id)
     
-    # 使い方
-    if event.message.text == "使い方":
-        how_to_use_text = "部屋を登録：参加中のルームIDを入力して部屋を登録します\n登録を解除：登録している部屋を解除して、新たな部屋を登録します。\nランキング：部屋に参加しているメンバーの目標達成率ランキングを表示します\n使い方：使い方を表示します\nやる気がなくなった：やる気がなくなったときのヒントを表示します\nアプリ：アプリへ移動します"
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=how_to_use_text)
-        )
+#     # 使い方
+#     if event.message.text == "使い方":
+#         how_to_use_text = "部屋を登録：参加中のルームIDを入力して部屋を登録します\n登録を解除：登録している部屋を解除して、新たな部屋を登録します。\nランキング：部屋に参加しているメンバーの目標達成率ランキングを表示します\n使い方：使い方を表示します\nやる気がなくなった：やる気がなくなったときのヒントを表示します\nアプリ：アプリへ移動します"
+#         line_bot_api.reply_message(
+#             event.reply_token,
+#             TextSendMessage(text=how_to_use_text)
+#         )
     
-    # やる気がなくなったとき用のヒント
-    TIPS = ["目標が難しすぎると、やる気がなくなります。目標を小さく設定してみましょう。",
-            "ポモドーロテクニックを試してみましょう。25分間集中して作業し、5分間休憩します。これを繰り返します。",
-            "目標を達成するためには、習慣化が必要です。毎日少しずつでも続けてみましょう。",
-            "何のために目標を設定したのか、最終的な目標は何かを思い出しましょう。",
-            "目標を達成することがどう自分の人生に影響するかを考えてみましょう。"
-            ]
+#     # やる気がなくなったとき用のヒント
+#     TIPS = ["目標が難しすぎると、やる気がなくなります。目標を小さく設定してみましょう。",
+#             "ポモドーロテクニックを試してみましょう。25分間集中して作業し、5分間休憩します。これを繰り返します。",
+#             "目標を達成するためには、習慣化が必要です。毎日少しずつでも続けてみましょう。",
+#             "何のために目標を設定したのか、最終的な目標は何かを思い出しましょう。",
+#             "目標を達成することがどう自分の人生に影響するかを考えてみましょう。"
+#             ]
 
-    # やる気がなくなった
-    if event.message.text == "やる気がなくなった":
-        # ランダムにヒントを表示
-        tip = random.choice(TIPS)
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=tip)
-        )
+#     # やる気がなくなった
+#     if event.message.text == "やる気がなくなった":
+#         # ランダムにヒントを表示
+#         tip = random.choice(TIPS)
+#         line_bot_api.reply_message(
+#             event.reply_token,
+#             TextSendMessage(text=tip)
+#         )
 
-    # else
-    else:
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="個別のメッセージには対応していません。使い方を参考に、メニュー画面を操作してください。")
-        )
+#     # else
+#     else:
+#         line_bot_api.reply_message(
+#             event.reply_token,
+#             TextSendMessage(text="個別のメッセージには対応していません。使い方を参考に、メニュー画面を操作してください。")
+#         )
 
-# Push message to the line users
-def push_progress_message(line_user_id):
-    # where user in a room latest one
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
-                line_user = cur.fetchall()
-    except Exception as e:
-        # send error to the line user
-        line_bot_api.push_message(
-            line_user_id,
-            TextSendMessage(text=f"エラーが発生しました")
-        )
+# # Push message to the line users
+# def push_progress_message(line_user_id):
+#     # where user in a room latest one
+#     try:
+#         with connect_to_database() as conn:
+#             with conn.cursor(cursor_factory=DictCursor) as cur:
+#                 cur.execute("SELECT * FROM line_users WHERE line_user_id = %s", (line_user_id,))
+#                 line_user = cur.fetchall()
+#     except Exception as e:
+#         # send error to the line user
+#         line_bot_api.push_message(
+#             line_user_id,
+#             TextSendMessage(text=f"エラーが発生しました")
+#         )
     
-    # get goals and progress rate in the room, and sort by progress rate
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT user_id FROM rooms WHERE room_id = %s", (line_user[0]["room_id"],))
-                user_ids = [row[0] for row in cur.fetchall()]
-    except Exception as e:
-        # send error to the line user
-        line_bot_api.push_message(
-            line_user_id,
-            TextSendMessage(text=f"エラーが発生しました")
-        )
+#     # get goals and progress rate in the room, and sort by progress rate
+#     try:
+#         with connect_to_database() as conn:
+#             with conn.cursor(cursor_factory=DictCursor) as cur:
+#                 cur.execute("SELECT user_id FROM rooms WHERE room_id = %s", (line_user[0]["room_id"],))
+#                 user_ids = [row[0] for row in cur.fetchall()]
+#     except Exception as e:
+#         # send error to the line user
+#         line_bot_api.push_message(
+#             line_user_id,
+#             TextSendMessage(text=f"エラーが発生しました")
+#         )
 
-    # get goals and progress rate in the room, and sort by progress rate
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT * FROM goals WHERE user_id IN %s ORDER BY progress_rate DESC", (tuple(user_ids),))
-                users_goals_info = cur.fetchall()
-    except Exception as e:
-        # send error to the line user
-        line_bot_api.push_message(
-            line_user_id,
-            TextSendMessage(text=f"エラーが発生しました")
-        )
+#     # get goals and progress rate in the room, and sort by progress rate
+#     try:
+#         with connect_to_database() as conn:
+#             with conn.cursor(cursor_factory=DictCursor) as cur:
+#                 cur.execute("SELECT * FROM goals WHERE user_id IN %s ORDER BY progress_rate DESC", (tuple(user_ids),))
+#                 users_goals_info = cur.fetchall()
+#     except Exception as e:
+#         # send error to the line user
+#         line_bot_api.push_message(
+#             line_user_id,
+#             TextSendMessage(text=f"エラーが発生しました")
+#         )
 
-    # count the number of members
-    number_of_members = len(users_goals_info)
+#     # count the number of members
+#     number_of_members = len(users_goals_info)
 
-    # push message to the line user
-    try:
-        # send members' goals and progress rate to the line user
-        message = f"現在のランキングをお知らせします\n\n"
-        for i in range(number_of_members):
-            message += f"{i+1}位：{users_goals_info[i]['goal']} {users_goals_info[i]['progress_rate']}%\n"
-        line_bot_api.push_message(
-            line_user_id,
-            TextSendMessage(text=message)
-        )        
+#     # push message to the line user
+#     try:
+#         # send members' goals and progress rate to the line user
+#         message = f"現在のランキングをお知らせします\n\n"
+#         for i in range(number_of_members):
+#             message += f"{i+1}位：{users_goals_info[i]['goal']} {users_goals_info[i]['progress_rate']}%\n"
+#         line_bot_api.push_message(
+#             line_user_id,
+#             TextSendMessage(text=message)
+#         )        
 
-    except Exception as e:
-        # send error to the line user
-        line_bot_api.push_message(
-            line_user_id,
-            TextSendMessage(text=f"エラーが発生しました")
-        )
+#     except Exception as e:
+#         # send error to the line user
+#         line_bot_api.push_message(
+#             line_user_id,
+#             TextSendMessage(text=f"エラーが発生しました")
+#         )
      
-# scheduled message to the line users
-def schedule_message():
-    # get all line users
-    try:
-        with connect_to_database() as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cur:
-                cur.execute("SELECT * FROM line_users")
-                line_users = cur.fetchall()
-    except Exception as e:
-        return str(e)
+# # scheduled message to the line users
+# def schedule_message():
+#     # get all line users
+#     try:
+#         with connect_to_database() as conn:
+#             with conn.cursor(cursor_factory=DictCursor) as cur:
+#                 cur.execute("SELECT * FROM line_users")
+#                 line_users = cur.fetchall()
+#     except Exception as e:
+#         return str(e)
 
 
-    # set random encouragement message
-    ENCOUAGEMENT_MESSAGES = ["ちゃんと目標達成に向かって頑張っていますか？", 
-                             "目標達成に向けて真剣に取り組んでいますか？", 
-                             "着実に目標達成に向けて進んでいますか？", 
-                             "自分で宣言したことを守れていますか？", 
-                             "コツコツと目標達成のために努力できていますか？", 
-                             "目標達成に集中できていますか？", 
-                             "自分で宣言した目標を意識できていますか？",
-                             "努力を継続できていますか？",
-                             "最終目標を意識して、努力できていますか？",
-                             "誘惑に負けずに、努力できていますか？",]
+#     # set random encouragement message
+#     ENCOUAGEMENT_MESSAGES = ["ちゃんと目標達成に向かって頑張っていますか？", 
+#                              "目標達成に向けて真剣に取り組んでいますか？", 
+#                              "着実に目標達成に向けて進んでいますか？", 
+#                              "自分で宣言したことを守れていますか？", 
+#                              "コツコツと目標達成のために努力できていますか？", 
+#                              "目標達成に集中できていますか？", 
+#                              "自分で宣言した目標を意識できていますか？",
+#                              "努力を継続できていますか？",
+#                              "最終目標を意識して、努力できていますか？",
+#                              "誘惑に負けずに、努力できていますか？",]
     
-    # push message to the line users
-    for line_user in line_users:
-        # set random encouragement message
-        encouragement_message = random.choice(ENCOUAGEMENT_MESSAGES)
+#     # push message to the line users
+#     for line_user in line_users:
+#         # set random encouragement message
+#         encouragement_message = random.choice(ENCOUAGEMENT_MESSAGES)
 
-        # push message to the line user
-        try:
-            line_bot_api.push_message(
-                line_user["line_user_id"],
-                TextSendMessage(text=encouragement_message + f" {APP_URL}")
-            )
-        except Exception as e:
-            return str(e)
+#         # push message to the line user
+#         try:
+#             line_bot_api.push_message(
+#                 line_user["line_user_id"],
+#                 TextSendMessage(text=encouragement_message + f" {APP_URL}")
+#             )
+#         except Exception as e:
+#             return str(e)
 
-# scheduled message to the line users
-sched = BackgroundScheduler(daemon=True)
-sched.add_job(schedule_message, 'cron', hour=20, minute=0, timezone=JST)
-sched.add_job(delete_goal_and_room, 'interval', minutes=1, timezone=JST)
-sched.start()
+# # scheduled message to the line users
+# sched = BackgroundScheduler(daemon=True)
+# sched.add_job(schedule_message, 'cron', hour=20, minute=0, timezone=JST)
+# sched.add_job(delete_goal_and_room, 'interval', minutes=1, timezone=JST)
+# sched.start()
 
 # run app
 if __name__ == "__main__":
-    app.run()
+    app.run(port=8000, debug=True)
